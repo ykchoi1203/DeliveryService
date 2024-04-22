@@ -263,6 +263,19 @@
   - DELETE /store/additionalMenu/{additionalMenuId}
   - 사용자는 메뉴에 대한 추가 메뉴를 삭제할 수 있다.
 
+- [ ] 주문 조회
+  - GET /order/list
+  - 사용자는 현재 날짜의 주문을 조회할 수 있다. 최신 순으로 정렬된다.
+  - 페이징 처리를 통해 최대 10개씩 조회 가능하다.
+
+- [ ] 주문 상세 조회
+  - GET /order/{orderId}
+  - 사용자는 해당 주문을 상세 조회할 수 있다.
+
+- [ ] 배달 완료 처리
+  - PUT /order/delivery/{orderId}
+  - 사용자는 해당 주문의 배달 완료 처리할 수 있다.
+
 - [ ] 영업 상태 변경(오픈 / 마감)
   - PUT /store/businessStatus
   - 사용자는 영업 상태를 변경할 수 있다. 오픈이면 마감으로, 마감이면 오픈으로 변경된다.
