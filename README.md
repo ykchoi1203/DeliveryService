@@ -362,4 +362,4 @@
 
 
 ## Trouble Shooting
-[go to the trouble shooting section](README.md)
+[go to the trouble shooting section](TROUBLE_SHOOTING.md)
