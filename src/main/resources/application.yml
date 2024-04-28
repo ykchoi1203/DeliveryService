@@ -16,3 +16,8 @@ spring:
 
   jwt:
     secret: c3ByaW5nLWJvb3QtcHJvamVjdC1kZWxpdmVyeS1zZXJ2aWNlLWp3dC1zZWNyZXQta2V5Cg==
+
+logging:
+  level:
+    root: INFO
+    com.younggeun.delivery: DEBUG
