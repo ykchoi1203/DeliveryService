@@ -28,7 +28,7 @@ public class UserService implements UserDetailsService {
     return org.springframework.security.core.userdetails.User
         .withUsername(email)
         .password(user.getPassword())
-        .roles("USER") // You can set roles here if needed
+        .roles("USER")
         .build();
   }
 
@@ -50,7 +50,7 @@ public class UserService implements UserDetailsService {
 
   // 로그인
   public User authenticate(Auth.SignIn user) {
-    var member = this.userRepository.findByEmail(user.getEmail()).orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다 -> " + user.getEmail()));
+    var member = this.userRepository.findByEmail(user.getEmail()).orElseThrow(UserNotFoundException::new);
 
     if(!this.passwordEncoder.matches(user.getPassword(), member.getPassword())) {
       throw new PasswordMismatchException();
