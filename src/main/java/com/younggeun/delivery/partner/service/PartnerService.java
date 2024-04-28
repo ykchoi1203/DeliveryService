@@ -2,13 +2,16 @@ package com.younggeun.delivery.partner.service;
 
 import com.younggeun.delivery.global.exception.impl.AlreadyExistPhoneNumberException;
 import com.younggeun.delivery.global.exception.impl.AlreadyExistUserException;
+import com.younggeun.delivery.global.exception.impl.MisMatchUserException;
 import com.younggeun.delivery.global.exception.impl.PasswordMismatchException;
 import com.younggeun.delivery.global.exception.impl.UserNotFoundException;
 import com.younggeun.delivery.global.model.Auth;
 import com.younggeun.delivery.partner.domain.PartnerRepository;
+import com.younggeun.delivery.partner.domain.dto.PartnerDto;
 import com.younggeun.delivery.partner.domain.entity.Partner;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -57,5 +60,40 @@ public class PartnerService implements UserDetailsService {
       throw new PasswordMismatchException();
     }
     return partner;
+  }
+
+  public Partner updatePartner(PartnerDto partnerDto, Authentication authentication) {
+    Partner partner = this.partnerRepository.findByEmailAndDeletedAtIsNull(authentication.getName()).orElseThrow(UserNotFoundException::new);
+
+    if(!authentication.getName().equals(partner.getEmail())) {
+      throw new MisMatchUserException();
+    }
+
+    if(!partner.getPhoneNumber().equals(partnerDto.getPhoneNumber()) && this.partnerRepository.existsByPhoneNumberAndDeletedAtIsNull(partner.getPhoneNumber())) {
+      throw new AlreadyExistPhoneNumberException();
+    }
+
+    return partnerRepository.save(Partner.builder()
+        .partnerId(partner.getPartnerId())
+        .partnerName(partnerDto.getPartnerName())
+        .email(partner.getEmail())
+        .role(partner.getRole())
+        .phoneNumber(partnerDto.getPhoneNumber())
+        .address(partnerDto.getAddress())
+        .password(this.passwordEncoder.encode(partnerDto.getPassword())).build()
+    );
+
+  }
+
+  public Object deletePartner(Authentication authentication) {
+    Partner partner = this.partnerRepository.findByEmailAndDeletedAtIsNull(authentication.getName()).orElseThrow(UserNotFoundException::new);
+
+    if(!authentication.getName().equals(partner.getEmail())) {
+      throw new MisMatchUserException();
+    }
+
+    partner.setDeletedAt();
+
+    return partnerRepository.save(partner);
   }
 }

@@ -51,6 +51,10 @@ public class Partner extends BaseEntity implements UserDetails {
 
   private LocalDateTime deletedAt;
 
+  public void setDeletedAt() {
+    this.deletedAt = LocalDateTime.now();
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     Collection<GrantedAuthority> collection = new ArrayList<>();
