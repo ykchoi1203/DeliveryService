@@ -3,17 +3,23 @@ package com.younggeun.delivery.user.domain.entity;
 import com.younggeun.delivery.global.entity.BaseEntity;
 import com.younggeun.delivery.global.entity.RoleType;
 import com.younggeun.delivery.user.domain.type.AuthType;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.NamedEntityGraph;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -53,9 +59,13 @@ public class User extends BaseEntity implements UserDetails {
 
   private LocalDateTime deletedAt;
 
+  public void setDeletedAt() {
+    this.deletedAt = LocalDateTime.now();
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    Collection<GrantedAuthority> collection = new ArrayList();
+    Collection<GrantedAuthority> collection = new ArrayList<>();
     collection.add(new GrantedAuthority() {
       @Override
       public String getAuthority() {

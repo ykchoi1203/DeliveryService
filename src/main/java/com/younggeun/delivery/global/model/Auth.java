@@ -1,10 +1,9 @@
 package com.younggeun.delivery.global.model;
 
 import com.younggeun.delivery.global.entity.RoleType;
-import com.younggeun.delivery.user.domain.dto.UserDto;
+import com.younggeun.delivery.partner.domain.entity.Partner;
 import com.younggeun.delivery.user.domain.entity.User;
 import com.younggeun.delivery.user.domain.type.AuthType;
-import java.util.List;
 import lombok.Data;
 
 public class Auth {
@@ -23,6 +22,7 @@ public class Auth {
     private String nickname;
     private AuthType authType;
     private RoleType role;
+    private String address;
 
     public User toEntity() {
       return User.builder()
@@ -36,14 +36,15 @@ public class Auth {
           .build();
     }
 
-//    public Partner toPartnerEntity() {
-//      return Partner.builder()
-//          .partnerId(this.userId)
-//          .password(this.password)
-//          .name(this.userName)
-//          .phoneNumber(this.phoneNumber)
-//          .roles(this.roles)
-//          .build();
-//    }
+    public Partner toPartnerEntity() {
+      return Partner.builder()
+          .email(this.email)
+          .password(this.password)
+          .partnerName(this.userName)
+          .phoneNumber(this.phoneNumber)
+          .address(this.address)
+          .role(this.role)
+          .build();
+    }
   }
 }
