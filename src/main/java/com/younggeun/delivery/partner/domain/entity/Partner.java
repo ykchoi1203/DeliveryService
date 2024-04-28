@@ -1,8 +1,7 @@
-package com.younggeun.delivery.user.domain.entity;
+package com.younggeun.delivery.partner.domain.entity;
 
 import com.younggeun.delivery.global.entity.BaseEntity;
 import com.younggeun.delivery.global.entity.RoleType;
-import com.younggeun.delivery.user.domain.type.AuthType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,11 +26,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 @Getter
 @Entity
-public class User extends BaseEntity implements UserDetails {
+public class Partner extends BaseEntity implements UserDetails {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long userId;
+  private Long partnerId;
 
   @Column(unique = true)
   private String email;
@@ -39,19 +38,12 @@ public class User extends BaseEntity implements UserDetails {
   @Column(nullable = false)
   private String password;
 
-  private String username;
-
-  @Column(unique = true)
-  private String nickname;
-
-  @Column(nullable = false)
-  private AuthType authType;
-
-  private String provider; //어떤 OAuth인지(google, naver 등)
-  private String provideId; // 해당 OAuth 의 key(id)
+  private String partnerName;
 
   @Column(unique = true)
   private String phoneNumber;
+
+  private String address;
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
@@ -78,12 +70,12 @@ public class User extends BaseEntity implements UserDetails {
 
   @Override
   public String getPassword() {
-    return password;
+    return null;
   }
 
   @Override
   public String getUsername() {
-    return email;
+    return null;
   }
 
   @Override
