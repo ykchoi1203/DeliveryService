@@ -1,7 +1,8 @@
 package com.younggeun.delivery.user.domain.entity;
 
-import com.younggeun.delivery.entity.BaseEntity;
-import com.younggeun.delivery.entity.RoleType;
+import com.younggeun.delivery.global.entity.BaseEntity;
+import com.younggeun.delivery.global.entity.RoleType;
+import com.younggeun.delivery.user.domain.type.AuthType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,44 +31,52 @@ public class User extends BaseEntity implements UserDetails {
   private Long userId;
 
   @Column(unique = true)
-  private String loginId;
-
-  private String socialId;
+  private String email;
 
   @Column(nullable = false)
   private String password;
 
+  private String username;
+
   @Column(unique = true)
   private String nickname;
 
-  @Column(unique = true)
-  private String email;
+  @Column(nullable = false)
+  private AuthType authType;
+
+  private String provider; //어떤 OAuth인지(google, naver 등)
+  private String provideId; // 해당 OAuth 의 key(id)
 
   @Column(unique = true)
   private String phoneNumber;
 
   @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
   private RoleType role;
 
   private LocalDateTime deletedAt;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    List<String> roles = new ArrayList<>();
-    roles.add(this.role.toString());
+    Collection<GrantedAuthority> collection = new ArrayList();
+    collection.add(new GrantedAuthority() {
+      @Override
+      public String getAuthority() {
 
-    return roles.stream().map(SimpleGrantedAuthority::new)
-        .collect(Collectors.toList());
+        return String.valueOf(role);
+      }
+    });
+    return collection;
   }
 
   @Override
   public String getPassword() {
-    return null;
+    return password;
   }
 
   @Override
   public String getUsername() {
-    return null;
+    return email;
   }
 
   @Override

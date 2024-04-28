@@ -1,4 +1,4 @@
-package com.younggeun.delivery.entity;
+package com.younggeun.delivery.global.entity;
 
 import lombok.Getter;
 

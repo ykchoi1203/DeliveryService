@@ -1,4 +1,4 @@
-package com.younggeun.delivery.config;
+package com.younggeun.delivery.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
