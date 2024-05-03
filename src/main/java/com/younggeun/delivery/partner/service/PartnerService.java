@@ -27,7 +27,7 @@ public class PartnerService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    Partner user = partnerRepository.findByEmailAndDeletedAtIsNull(email)
+    Partner user = partnerRepository.findByEmail(email)
         .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     return org.springframework.security.core.userdetails.User
         .withUsername(email)
@@ -38,11 +38,11 @@ public class PartnerService implements UserDetailsService {
 
   // 회원가입
   public Partner register(Auth.SignUp partner) {
-    if(partnerRepository.existsByEmailAndDeletedAtIsNull(partner.getEmail())) {
+    if(partnerRepository.existsByEmail(partner.getEmail())) {
       throw new AlreadyExistUserException();
     }
 
-    if(partnerRepository.existsByPhoneNumberAndDeletedAtIsNull(partner.getPhoneNumber())) {
+    if(partnerRepository.existsByPhoneNumber(partner.getPhoneNumber())) {
       throw new AlreadyExistPhoneNumberException();
     }
 
@@ -53,7 +53,7 @@ public class PartnerService implements UserDetailsService {
 
   // 로그인
   public Partner authenticate(Auth.SignIn user) {
-    var partner = partnerRepository.findByEmailAndDeletedAtIsNull(user.getEmail()).orElseThrow(
+    var partner = partnerRepository.findByEmail(user.getEmail()).orElseThrow(
         UserNotFoundException::new);
 
     if(!passwordEncoder.matches(user.getPassword(), partner.getPassword())) {
@@ -63,13 +63,13 @@ public class PartnerService implements UserDetailsService {
   }
 
   public Partner updatePartner(PartnerDto partnerDto, Authentication authentication) {
-    Partner partner = partnerRepository.findByEmailAndDeletedAtIsNull(authentication.getName()).orElseThrow(UserNotFoundException::new);
+    Partner partner = partnerRepository.findByEmail(authentication.getName()).orElseThrow(UserNotFoundException::new);
 
     if(!authentication.getName().equals(partner.getEmail())) {
       throw new MisMatchUserException();
     }
 
-    if(!partner.getPhoneNumber().equals(partnerDto.getPhoneNumber()) && partnerRepository.existsByPhoneNumberAndDeletedAtIsNull(partner.getPhoneNumber())) {
+    if(!partner.getPhoneNumber().equals(partnerDto.getPhoneNumber()) && partnerRepository.existsByPhoneNumber(partner.getPhoneNumber())) {
       throw new AlreadyExistPhoneNumberException();
     }
 
@@ -86,7 +86,7 @@ public class PartnerService implements UserDetailsService {
   }
 
   public Object deletePartner(Authentication authentication) {
-    Partner partner = this.partnerRepository.findByEmailAndDeletedAtIsNull(authentication.getName()).orElseThrow(UserNotFoundException::new);
+    Partner partner = partnerRepository.findByEmail(authentication.getName()).orElseThrow(UserNotFoundException::new);
 
     if(!authentication.getName().equals(partner.getEmail())) {
       throw new MisMatchUserException();

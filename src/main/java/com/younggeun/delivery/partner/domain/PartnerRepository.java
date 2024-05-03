@@ -9,7 +9,9 @@ public interface PartnerRepository extends JpaRepository<Partner, Long> {
 
   Optional<Partner> findByEmailAndDeletedAtIsNull(String email);
 
-  boolean existsByPhoneNumberAndDeletedAtIsNull(String phoneNumber);
+  boolean existsByPhoneNumber(String phoneNumber);
 
-  boolean existsByEmailAndDeletedAtIsNull(String email);
+  boolean existsByEmail(String email);
+
+  Optional<Partner> findByEmail(String name);
 }

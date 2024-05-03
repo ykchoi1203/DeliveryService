@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -14,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @NoArgsConstructor
 @NamedEntityGraph
 @Builder
+@Setter
 @Getter
 public class PartnerDto implements UserDetails {
   private String email;

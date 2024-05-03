@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/partner")
+@RequestMapping("/partners")
 @RequiredArgsConstructor
 public class PartnerController {
   private final PartnerService partnerService;
@@ -39,9 +38,8 @@ public class PartnerController {
   }
 
   // 파트너 정보 수정 ( 비밀번호, 주소, 전화번호, 이름 )
-  @PutMapping("/update/{partnerId}")
-  public ResponseEntity<?> update(@RequestBody PartnerDto request, Authentication authentication,
-      @PathVariable String partnerId) {
+  @PutMapping
+  public ResponseEntity<?> update(@RequestBody PartnerDto request, Authentication authentication) {
     var result = this.partnerService.updatePartner(request, authentication);
 
     return ResponseEntity.ok(result);

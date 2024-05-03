@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
   private final UserService userService;
@@ -38,7 +38,7 @@ public class UserController {
   }
 
   // 회원 정보 수정 ( 비밀번호, 닉네임, 전화번호, 이름 )
-  @PutMapping("/update")
+  @PutMapping
   public ResponseEntity<?> update(@RequestBody UserDto request, Authentication authentication) {
     var result = this.userService.updateUser(request, authentication);
 
