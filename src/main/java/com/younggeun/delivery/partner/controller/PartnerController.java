@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,14 +33,15 @@ public class PartnerController {
   @PostMapping("/signin")
   public ResponseEntity<?> signin(@RequestBody Auth.SignIn request) {
     var partner = this.partnerService.authenticate(request);
-    var token = this.tokenProvider.generateToken(partner.getUsername(), partner.getRole());
+    var token = this.tokenProvider.generateToken(partner.getEmail(), partner.getRole());
 
     return ResponseEntity.ok(token);
   }
 
   // 파트너 정보 수정 ( 비밀번호, 주소, 전화번호, 이름 )
-  @PutMapping("/update")
-  public ResponseEntity<?> update(@RequestBody PartnerDto request, Authentication authentication) {
+  @PutMapping("/update/{partnerId}")
+  public ResponseEntity<?> update(@RequestBody PartnerDto request, Authentication authentication,
+      @PathVariable String partnerId) {
     var result = this.partnerService.updatePartner(request, authentication);
 
     return ResponseEntity.ok(result);
