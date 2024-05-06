@@ -18,7 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class UserDto implements UserDetails {
   private String email;
   private String password;
-  private String username;
+  private String memberName;
   private String nickname;
   private String phoneNumber;
 
