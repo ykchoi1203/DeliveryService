@@ -11,7 +11,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,7 +31,7 @@ public class TokenProvider {
   private Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
 
-  @Value("{spring.jwt.secret}")
+  @Value("${spring.jwt.secret}")
   private String secretKey;
 
   // 토큰 생성
@@ -52,21 +51,44 @@ public class TokenProvider {
   }
 
   public Authentication getUserAuthentication(String jwt) {
-    UserDetails userDetails = this.userService.loadUserByUsername(this.getUserName(jwt));
+    Claims claims = this.parseClaims(jwt);
+    String username = claims.getSubject();
+    String roles = this.getRolesFromToken(jwt);
 
-    return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    if (username != null && roles != null) {
+      UserDetails userDetails = this.userService.loadUserByUsername(username);
+      return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+
+    return null;
   }
 
   public Authentication getPartnerAuthentication(String jwt) {
-    UserDetails userDetails = this.partnerService.loadUserByUsername(this.getUserName(jwt));
+    Claims claims = this.parseClaims(jwt);
+    String username = claims.getSubject();
+    String roles = this.getRolesFromToken(jwt);
 
-    return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    if (username != null && roles != null) {
+      UserDetails userDetails = this.partnerService.loadUserByUsername(username);
+      return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+
+    return null;
+
   }
 
   public Authentication getAdminAuthentication(String jwt) {
-    UserDetails userDetails = this.adminService.loadUserByUsername(this.getUserName(jwt));
+    Claims claims = this.parseClaims(jwt);
+    String username = claims.getSubject();
+    String roles = this.getRolesFromToken(jwt);
 
-    return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    if (username != null && roles != null) {
+      UserDetails userDetails = adminService.loadUserByUsername(username);
+      return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+    }
+
+    return null;
+
   }
 
   public String getUserName(String token) {
@@ -84,7 +106,11 @@ public class TokenProvider {
 
   private Claims parseClaims(String token) {
     try {
-      return Jwts.parser().setSigningKey(this.secretKey).parseClaimsJws(token).getBody();
+      return Jwts.parserBuilder()
+          .setSigningKey(key)
+          .build()
+          .parseClaimsJws(token)
+          .getBody();
     } catch (ExpiredJwtException e) {
       return e.getClaims();
     }
@@ -92,8 +118,8 @@ public class TokenProvider {
 
   public String getRolesFromToken(String token) {
     Claims claims = this.parseClaims(token);
-    List<String> roles = (List<String>) claims.get(KEY_ROLES);
+    String roles = (String) claims.get(KEY_ROLES);
 
-    return roles.isEmpty() ? null : roles.get(0);
+    return roles.isEmpty() ? null : roles;
   }
 }
