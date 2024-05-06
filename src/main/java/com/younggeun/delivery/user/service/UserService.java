@@ -52,7 +52,6 @@ public class UserService implements UserDetailsService {
 
     user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-
     return userRepository.save(user.toEntity());
   }
 
@@ -78,13 +77,13 @@ public class UserService implements UserDetailsService {
       throw new AlreadyExistUserException();
     }
 
-    if(!user.getPhoneNumber().equals(userDto.getPhoneNumber()) && userRepository.existsByPhoneNumber(user.getPhoneNumber())) {
+    if(!user.getPhoneNumber().equals(userDto.getPhoneNumber()) && userRepository.existsByPhoneNumber(userDto.getPhoneNumber())) {
       throw new AlreadyExistPhoneNumberException();
     }
 
     return userRepository.save(User.builder()
                                       .userId(user.getUserId())
-                                      .username(userDto.getUsername())
+                                      .username(userDto.getMemberName())
                                       .email(user.getEmail())
                                       .authType(user.getAuthType())
                                       .provideId(user.getProvideId())

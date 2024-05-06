@@ -69,7 +69,7 @@ public class PartnerService implements UserDetailsService {
       throw new MisMatchUserException();
     }
 
-    if(!partner.getPhoneNumber().equals(partnerDto.getPhoneNumber()) && partnerRepository.existsByPhoneNumber(partner.getPhoneNumber())) {
+    if(!partner.getPhoneNumber().equals(partnerDto.getPhoneNumber()) && partnerRepository.existsByPhoneNumber(partnerDto.getPhoneNumber())) {
       throw new AlreadyExistPhoneNumberException();
     }
 
@@ -95,5 +95,9 @@ public class PartnerService implements UserDetailsService {
     partner.setDeletedAt();
 
     return partnerRepository.save(partner);
+  }
+
+  public Partner getPartner(Authentication authentication) {
+    return partnerRepository.findByEmail(authentication.getName()).orElseThrow(UserNotFoundException::new);
   }
 }

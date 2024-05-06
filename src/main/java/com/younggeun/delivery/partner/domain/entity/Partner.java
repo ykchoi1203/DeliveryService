@@ -15,7 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
+
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,7 +24,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Builder
 @Getter
 @Entity
-@SQLRestriction("deletedAt = null")
+@Where(clause = "deleted_at is null")
 public class Partner extends BaseEntity {
 
   @Id
