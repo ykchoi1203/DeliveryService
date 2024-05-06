@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       } else if ("ROLE_USER".equals(role)) {
         authentication = this.tokenProvider.getUserAuthentication(token);
       } else if ("ROLE_ADMIN".equals(role)) {
-        authentication = this.tokenProvider.getUserAuthentication(token);
+        authentication = this.tokenProvider.getAdminAuthentication(token);
       }
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
