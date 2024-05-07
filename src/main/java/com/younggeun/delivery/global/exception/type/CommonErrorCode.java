@@ -1,0 +1,15 @@
+package com.younggeun.delivery.global.exception.type;
+
+import com.younggeun.delivery.global.exception.ErrorCode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+@Getter
+@AllArgsConstructor
+public enum CommonErrorCode implements ErrorCode {
+  INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
+  RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "Resource not exists"),
+  INVALID_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다.");
+  private final HttpStatus httpStatus;
+  private final String message;
+}
