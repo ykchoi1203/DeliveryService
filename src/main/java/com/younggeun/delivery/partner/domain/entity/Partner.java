@@ -11,14 +11,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedEntityGraph;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.hibernate.annotations.Where;
+
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -26,7 +24,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 @Getter
 @Entity
-public class Partner extends BaseEntity implements UserDetails {
+@Where(clause = "deleted_at is null")
+public class Partner extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,46 +54,5 @@ public class Partner extends BaseEntity implements UserDetails {
     this.deletedAt = LocalDateTime.now();
   }
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    Collection<GrantedAuthority> collection = new ArrayList<>();
-    collection.add(new GrantedAuthority() {
-      @Override
-      public String getAuthority() {
 
-        return String.valueOf(role);
-      }
-    });
-    return collection;
-  }
-
-  @Override
-  public String getPassword() {
-    return null;
-  }
-
-  @Override
-  public String getUsername() {
-    return null;
-  }
-
-  @Override
-  public boolean isAccountNonExpired() {
-    return false;
-  }
-
-  @Override
-  public boolean isAccountNonLocked() {
-    return false;
-  }
-
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return false;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return false;
-  }
 }

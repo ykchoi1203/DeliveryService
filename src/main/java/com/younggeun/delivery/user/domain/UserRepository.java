@@ -5,11 +5,12 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-  Optional<User> findByEmailAndDeletedAtIsNull(String email);
 
-  boolean existsByEmailAndDeletedAtIsNull(String email);
+  boolean existsByPhoneNumber(String phoneNumber);
 
-  boolean existsByNicknameAndDeletedAtIsNull(String nickname);
+  boolean existsByEmail(String email);
 
-  boolean existsByPhoneNumberAndDeletedAtIsNull(String phoneNumber);
+  boolean existsByNickname(String nickname);
+
+  Optional<User> findByEmail(String email);
 }

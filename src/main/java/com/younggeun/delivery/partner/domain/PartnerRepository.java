@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PartnerRepository extends JpaRepository<Partner, Long> {
 
-  boolean existsByEmail(String email);
 
   Optional<Partner> findByEmailAndDeletedAtIsNull(String email);
 
-  boolean existsByPhoneNumberAndDeletedAtIsNull(String phoneNumber);
+  boolean existsByPhoneNumber(String phoneNumber);
+
+  boolean existsByEmail(String email);
+
+  Optional<Partner> findByEmail(String name);
 }
