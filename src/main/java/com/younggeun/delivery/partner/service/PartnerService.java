@@ -74,7 +74,7 @@ public class PartnerService implements UserDetailsService {
     if(!partner.getPhoneNumber().equals(partnerDto.getPhoneNumber()) && partnerRepository.existsByPhoneNumber(partnerDto.getPhoneNumber())) {
       throw new RestApiException(EXIST_PHONE_EXCEPTION);
     }
-    System.out.println(partnerDto.getPassword());
+
     partnerDto.setPassword(passwordEncoder.encode(partnerDto.getPassword()));
     Partner updatePartner = Partner.builder()
         .partnerId(partner.getPartnerId())
