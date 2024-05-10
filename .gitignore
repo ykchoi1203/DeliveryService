@@ -166,9 +166,9 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,intellij,java
 
 *.png
-*.gradle
 *.idea
 .gradle/
 .idea/
 *.lock
 build/tmp
+.gitignore
