@@ -13,11 +13,20 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class CategoryDto {
+  private Long categoryId;
   private String name;
   private int sequence;
 
   public Category toEntity() {
     return Category.builder()
+        .name(name)
+        .sequence(sequence)
+        .build();
+  }
+
+  public Category toEntity(Long categoryId) {
+    return Category.builder()
+        .categoryId(categoryId)
         .name(name)
         .sequence(sequence)
         .build();
