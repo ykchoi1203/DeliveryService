@@ -1,14 +1,8 @@
 package com.younggeun.delivery.store.controller;
 
-import com.younggeun.delivery.store.domain.dto.PhotoDto;
 import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.service.StoreService;
 import io.swagger.v3.oas.annotations.Operation;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +10,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,31 +58,16 @@ public class StoreController {
   @PreAuthorize("hasRole('PARTNER')")
   public ResponseEntity<?> createStorePhoto(Authentication authentication, @RequestParam("file") MultipartFile file,
       @PathVariable String storeId) {
+    var result = storeService.createStorePhoto(authentication, file, Long.parseLong(storeId), photoBaseLocalPath, photoBaseUrlPath);
+    return ResponseEntity.ok(result);
+  }
 
-    PhotoDto storePhotoDto = new PhotoDto();
-    String saveFilename = "";
-    String urlFilename = "";
-
-    if (file != null) {
-      String originalFilename = file.getOriginalFilename();
-
-      String[] arrFilename = getNewSaveFile(photoBaseLocalPath, photoBaseUrlPath, originalFilename);
-
-      saveFilename = arrFilename[0];
-      urlFilename = arrFilename[1];
-
-      try {
-        File newFile = new File(saveFilename);
-        FileCopyUtils.copy(file.getInputStream(), new FileOutputStream(newFile));
-      } catch (IOException e) {
-        log.warn(e.getMessage());
-      }
-    }
-
-    storePhotoDto.setUrl(urlFilename);
-    storePhotoDto.setPhotoName(saveFilename);
-
-    var result = storeService.createStorePhoto(authentication, storePhotoDto, Long.parseLong(storeId));
+  @Operation(summary = "partner 상점 사진 변경", description = "request")
+  @PutMapping("/partners/store/photo/{storeId}")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> updateStorePhoto(Authentication authentication, @RequestParam("file") MultipartFile file,
+      @PathVariable String storeId) {
+    var result = storeService.updateStorePhoto(authentication, file, Long.parseLong(storeId), photoBaseLocalPath, photoBaseUrlPath);
     return ResponseEntity.ok(result);
   }
 
@@ -98,67 +77,18 @@ public class StoreController {
   public ResponseEntity<?> createStoreProfilePhoto(Authentication authentication, @RequestParam("file") MultipartFile file,
       @PathVariable String storeId) {
 
-    PhotoDto storeProfilePhotoDto = new PhotoDto();
-    String saveFilename = "";
-    String urlFilename = "";
-
-    if (file != null) {
-      String originalFilename = file.getOriginalFilename();
-
-      String[] arrFilename = getNewSaveFile(profileBaseLocalPath, profileBaseUrlPath, originalFilename);
-
-      saveFilename = arrFilename[0];
-      urlFilename = arrFilename[1];
-
-      try {
-        File newFile = new File(saveFilename);
-        FileCopyUtils.copy(file.getInputStream(), new FileOutputStream(newFile));
-      } catch (IOException e) {
-        log.warn(e.getMessage());
-      }
-    }
-
-    storeProfilePhotoDto.setUrl(urlFilename);
-    storeProfilePhotoDto.setPhotoName(saveFilename);
-
-    var result = storeService.createStoreProfilePhoto(authentication, storeProfilePhotoDto, Long.parseLong(storeId));
+    var result = storeService.createStoreProfilePhoto(authentication, file, Long.parseLong(storeId), profileBaseLocalPath, profileBaseUrlPath);
     return ResponseEntity.ok(result);
   }
 
-  private String[] getNewSaveFile(String baseLocalPath, String baseUrlPath, String originalFilename) {
+  @Operation(summary = "partner 상점 프로필 사진 변경", description = "request")
+  @PutMapping("/partners/store/photo/{storeId}/profile")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> updateStoreProfilePhoto(Authentication authentication, @RequestParam("file") MultipartFile file,
+      @PathVariable String storeId) {
 
-    LocalDate now = LocalDate.now();
-
-    String[] dirs = {
-        String.format("%s/%d/", baseLocalPath,now.getYear()),
-        String.format("%s/%d/%02d/", baseLocalPath, now.getYear(),now.getMonthValue()),
-        String.format("%s/%d/%02d/%02d/", baseLocalPath, now.getYear(), now.getMonthValue(), now.getDayOfMonth())};
-
-    String urlDir = String.format("%s/%d/%02d/%02d/", baseUrlPath, now.getYear(), now.getMonthValue(), now.getDayOfMonth());
-
-    for(String dir : dirs) {
-      File file = new File(dir);
-      if (!file.isDirectory()) {
-        file.mkdir();
-      }
-    }
-
-    String fileExtension = "";
-    if (originalFilename != null) {
-      int dotPos = originalFilename.lastIndexOf(".");
-      if (dotPos > -1) {
-        fileExtension = originalFilename.substring(dotPos + 1);
-      }
-    }
-
-    String uuid = UUID.randomUUID().toString().replaceAll("-", "");
-    String newFilename = String.format("%s%s", dirs[2], uuid);
-    String newUrlFilename = String.format("%s%s", urlDir, uuid);
-    if (fileExtension.length() > 0) {
-      newFilename += "." + fileExtension;
-      newUrlFilename += "." + fileExtension;
-    }
-
-    return new String[]{newFilename, newUrlFilename};
+    var result = storeService.updateStoreProfilePhoto(authentication, file, Long.parseLong(storeId), profileBaseLocalPath, profileBaseUrlPath);
+    return ResponseEntity.ok(result);
   }
+
 }

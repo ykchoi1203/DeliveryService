@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StorePhotoRepository extends JpaRepository<StorePhoto, Long> {
 
   Optional<StorePhoto> findByStore(Store store);
+
+  boolean existsByStore(Store store);
 }
