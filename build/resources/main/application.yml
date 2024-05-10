@@ -27,5 +27,9 @@ store:
     baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/photo/files
     baseUrlPath: /files
   profile:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/photo/files
+    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/profile/files
+    baseUrlPath: /files
+menu:
+  photo:
+    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/menu/photo/files
     baseUrlPath: /files

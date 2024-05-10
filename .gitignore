@@ -171,3 +171,4 @@ $RECYCLE.BIN/
 .gradle/
 .idea/
 *.lock
+build/tmp

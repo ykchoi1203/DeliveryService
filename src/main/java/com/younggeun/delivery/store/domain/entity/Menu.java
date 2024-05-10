@@ -15,25 +15,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Where;
 
+
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Getter
-@Setter
 @Entity
 @Where(clause = "deleted_at is null")
-public class StorePhoto extends BaseEntity {
+public class Menu extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long storePhotoId;
+  private Long menuId;
 
-  private String url;
-  private String photoName;
+  private String menuName;
 
+  private int price;
+  private String description;
+
+  private boolean soldOutStatus;
   private LocalDateTime deletedAt;
 
   @ManyToOne
-  @JoinColumn(name = "store_id")
-  private Store store;
+  @JoinColumn(name = "category_id")
+  private MenuCategory menuCategory;
 }

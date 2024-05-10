@@ -1,5 +1,6 @@
 package com.younggeun.delivery.user.domain.dto;
 
+import com.younggeun.delivery.user.domain.entity.User;
 import jakarta.persistence.NamedEntityGraph;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 @Getter
 public class UserDto implements UserDetails {
+
   private String email;
   private String password;
   private String memberName;
@@ -63,5 +65,19 @@ public class UserDto implements UserDetails {
   @Override
   public boolean isEnabled() {
     return false;
+  }
+
+  public User toEntity(User user, String password) {
+    return User.builder()
+        .userId(user.getUserId())
+        .username(memberName)
+        .email(user.getEmail())
+        .authType(user.getAuthType())
+        .provideId(user.getProvideId())
+        .provider(user.getProvider())
+        .role(user.getRole())
+        .phoneNumber(phoneNumber)
+        .nickname(nickname)
+        .password(password).build();
   }
 }

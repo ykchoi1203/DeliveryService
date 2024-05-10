@@ -18,15 +18,14 @@ import org.hibernate.annotations.Where;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Getter
 @Setter
+@Getter
 @Entity
 @Where(clause = "deleted_at is null")
-public class StorePhoto extends BaseEntity {
-
+public class MenuPhoto extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long storePhotoId;
+  private Long menuPhotoId;
 
   private String url;
   private String photoName;
@@ -34,6 +33,6 @@ public class StorePhoto extends BaseEntity {
   private LocalDateTime deletedAt;
 
   @ManyToOne
-  @JoinColumn(name = "store_id")
-  private Store store;
+  @JoinColumn(name = "menu_id")
+  private Menu menu;
 }
