@@ -2,10 +2,10 @@ package com.younggeun.delivery.admin.service;
 
 import static com.younggeun.delivery.global.entity.RoleType.ROLE_ADMIN;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXISTS_SEQUENCE_EXCEPTION;
+import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_PASSWORD_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
 import com.younggeun.delivery.global.exception.RestApiException;
-import com.younggeun.delivery.global.exception.impl.PasswordMismatchException;
 import com.younggeun.delivery.global.model.Auth;
 import com.younggeun.delivery.store.domain.CategoryRepository;
 import com.younggeun.delivery.store.domain.dto.CategoryDto;
@@ -51,7 +51,7 @@ public class AdminService implements UserDetailsService {
     var member = userRepository.findByEmail(user.getEmail()).orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
 
     if(!passwordEncoder.matches(user.getPassword(), member.getPassword())) {
-      throw new PasswordMismatchException();
+      throw new RestApiException(MISMATCH_PASSWORD_EXCEPTION);
     }
 
     if(member.getRole() == ROLE_ADMIN) {
