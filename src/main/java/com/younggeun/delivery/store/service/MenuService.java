@@ -49,7 +49,7 @@ public class MenuService {
   private final AdditionalMenuRepository additionalMenuRepository;
 
   public List<MenuDto> selectMenu(Authentication authentication, String storeId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
 
     List<MenuCategory> menuCategoryList = menuCategoryRepository.findAllByStore(store);
     List<Long> menuCategoryIdList = menuCategoryList.stream().map(MenuCategory::getCategoryId).toList();
@@ -67,7 +67,7 @@ public class MenuService {
   }
 
   public MenuCategory createStoreCategory(Authentication authentication, MenuCategoryDto menuCategoryDto, String storeId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
 
     if(menuCategoryRepository.existsBySequence(store.getStoreId(), menuCategoryDto.getSequence()) > 0) {
       throw new RestApiException(ALREADY_EXIST_SEQUENCE);
@@ -78,7 +78,7 @@ public class MenuService {
 
   public Menu createStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
 
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
     MenuCategory menuCategory = menuCategoryRepository.findById(menuDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
 
     if(menuCategory.getStore().getStoreId() != Long.parseLong(storeId)) {
@@ -89,14 +89,14 @@ public class MenuService {
   }
 
   public Menu updateStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
     Menu menu = menuRepository.findById(menuDto.getMenuId()).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
     MenuCategory menuCategory = menuCategoryRepository.findById(menuDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
     return menuRepository.save(menuDto.toEntity(menu.getMenuId(), menuCategory));
   }
 
   public boolean deleteStoreMenu(Authentication authentication, String storeId, long menuId) {
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
 
     menuRepository.findById(menuId).ifPresent(item -> {
       item.setDeletedAt(LocalDateTime.now());
@@ -106,7 +106,7 @@ public class MenuService {
     return true;
   }
 
-  private Store isMatchUser(Authentication authentication, String storeId) {
+  private Store getStoreWithMatchUser(Authentication authentication, String storeId) {
     Store store = storeRepository.findById(Long.parseLong(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
     if(!store.getPartner().getEmail().equals(authentication.getName())) {
       throw new RestApiException(MISMATCH_PARTNER_STORE);
@@ -116,18 +116,18 @@ public class MenuService {
 
 
   public List<MenuCategory> selectMenuCategory(Authentication authentication, String storeId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
 
     return menuCategoryRepository.findAllByStore(store);
   }
 
   public MenuCategory updateStoreMenuCategory(Authentication authentication, MenuCategoryDto menuCategoryDto, String storeId, String categoryId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
     return menuCategoryRepository.save(menuCategoryDto.toEntity(store, Long.parseLong(categoryId)));
   }
 
   public boolean deleteStoreMenuCategory(Authentication authentication, String storeId, long categoryId) {
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
 
     MenuCategory category = menuCategoryRepository.findById(categoryId).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
 
@@ -141,7 +141,7 @@ public class MenuService {
 
   @Transactional
   public MenuPhoto createMenuPhoto(Authentication authentication, MultipartFile file, String storeId, long menuId, String menuBaseLocalPath, String menuBaseUrlPath) {
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
 
     PhotoDto menuPhotoDto = new PhotoDto();
     menuPhotoDto.savePhotos(file, menuBaseLocalPath, menuBaseUrlPath);
@@ -156,7 +156,7 @@ public class MenuService {
 
   @Transactional
   public MenuPhoto updateMenuPhoto(Authentication authentication, MultipartFile file, String storeId, long menuId, String menuBaseLocalPath, String menuBaseUrlPath) {
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
     Menu menu = menuRepository.findById(menuId).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
 
     menuPhotoRepository.findByMenu(menu).ifPresent(menuPhoto -> {
@@ -175,7 +175,7 @@ public class MenuService {
 
   public AdditionalMenu createAdditionalMenu(Authentication authentication,
       AdditionalMenuDto additionalMenuDto, String storeId, String menuId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
     Menu menu = isMatchStore(store, menuId);
     if(additionalMenuRepository.existsBySequenceAndMenu(additionalMenuDto.getSequence(), menu)) {
       throw new RestApiException(EXISTS_SEQUENCE_EXCEPTION);
@@ -185,7 +185,7 @@ public class MenuService {
   }
 
   public AdditionalMenu updateAdditionalMenu(Authentication authentication, AdditionalMenuDto additionalMenuDto, String storeId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
     Menu menu = isMatchStore(store, additionalMenuDto.getMenuId().toString());
     AdditionalMenu additionalMenu = additionalMenuRepository.findById(additionalMenuDto.getAdditionalMenuId()).orElseThrow(() -> new RestApiException(ADDITIONAL_MENU_NOT_FOUND));
     if(additionalMenu.getSequence() != additionalMenuDto.getSequence() && additionalMenuRepository.existsBySequenceAndMenu(additionalMenuDto.getSequence(), menu)) {
@@ -199,7 +199,7 @@ public class MenuService {
   }
 
   public AdditionalMenu deleteAdditionalMenu(Authentication authentication, String storeId, long additionalId) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
     AdditionalMenu additionalMenu = additionalMenuRepository.findById(additionalId).orElseThrow(()-> new RestApiException(ADDITIONAL_MENU_NOT_FOUND));
     isMatchStore(store, additionalMenu.getMenu().getMenuId().toString());
 
@@ -218,7 +218,7 @@ public class MenuService {
 
 
   public AdditionalMenuDto updateSoldOutAdditionalMenu(Authentication authentication, String additionalId, String storeId, boolean soldOut) {
-    Store store = isMatchUser(authentication, storeId);
+    Store store = getStoreWithMatchUser(authentication, storeId);
     AdditionalMenu additionalMenu = additionalMenuRepository.findById(Long.parseLong(additionalId)).orElseThrow(() -> new RestApiException(ADDITIONAL_MENU_NOT_FOUND));
     isMatchStore(store, additionalMenu.getMenu().getMenuId().toString());
     additionalMenu.setSoldOutStatus(soldOut);
@@ -228,7 +228,7 @@ public class MenuService {
 
   public MenuDto updateSoldOutStoreMenu(Authentication authentication, String storeId,
       String menuId, boolean soldOut) {
-    isMatchUser(authentication, storeId);
+    getStoreWithMatchUser(authentication, storeId);
     Menu menu = menuRepository.findById(Long.valueOf(menuId)).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
     menu.setSoldOutStatus(soldOut);
     return new MenuDto(menuRepository.save(menu));
