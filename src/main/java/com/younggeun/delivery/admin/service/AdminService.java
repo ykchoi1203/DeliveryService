@@ -1,6 +1,8 @@
 package com.younggeun.delivery.admin.service;
 
 import static com.younggeun.delivery.global.entity.RoleType.ROLE_ADMIN;
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.CATEGORY_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.NOT_ALLOW_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXISTS_SEQUENCE_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_PASSWORD_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
@@ -54,8 +56,8 @@ public class AdminService implements UserDetailsService {
       throw new RestApiException(MISMATCH_PASSWORD_EXCEPTION);
     }
 
-    if(member.getRole() == ROLE_ADMIN) {
-      throw new RuntimeException();
+    if(member.getRole() != ROLE_ADMIN) {
+      throw new RestApiException(NOT_ALLOW_EXCEPTION);
     }
 
     return member;
@@ -67,13 +69,15 @@ public class AdminService implements UserDetailsService {
 
   public Category createCategory(CategoryDto categoryDto) {
     if(existIdx(categoryDto.getSequence())) throw new RestApiException(EXISTS_SEQUENCE_EXCEPTION);
-    return categoryRepository.save(categoryDto.toEntity());
+    return categoryRepository.save(categoryDto.toEntity(categoryDto.getCategoryId()));
   }
 
   public Category updateCategory(CategoryDto categoryDto, Long categoryId) {
+    Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new RestApiException(CATEGORY_NOT_FOUND));
     if(existIdx(categoryDto.getSequence())) throw new RestApiException(EXISTS_SEQUENCE_EXCEPTION);
-
-    return categoryRepository.save(categoryDto.toEntity(categoryId));
+    category.setName(categoryDto.getName());
+    category.setSequence(categoryDto.getSequence());
+    return categoryRepository.save(category);
   }
 
   public boolean existIdx(int idx) {
