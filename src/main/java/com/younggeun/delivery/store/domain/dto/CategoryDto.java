@@ -17,12 +17,6 @@ public class CategoryDto {
   private String name;
   private int sequence;
 
-  public Category toEntity() {
-    return Category.builder()
-        .name(name)
-        .sequence(sequence)
-        .build();
-  }
 
   public Category toEntity(Long categoryId) {
     return Category.builder()

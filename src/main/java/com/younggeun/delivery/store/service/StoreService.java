@@ -1,6 +1,6 @@
 package com.younggeun.delivery.store.service;
 
-import static com.younggeun.delivery.global.exception.type.CommonErrorCode.FILE_SAVE_ERROR;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXIST_PHOTO_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_PARTNER_STORE;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
@@ -17,12 +17,8 @@ import com.younggeun.delivery.store.domain.entity.Category;
 import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.store.domain.entity.StorePhoto;
 import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,7 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -89,6 +84,7 @@ public class StoreService {
         .partner(partner).build());
   }
 
+  @Transactional
   public StorePhoto createStorePhoto(Authentication authentication, MultipartFile file, Long storeId,
       String photoBaseLocalPath, String photoBaseUrlPath) {
     Partner partner = getPartner(authentication);
@@ -98,13 +94,41 @@ public class StoreService {
       throw new RuntimeException();
     }
 
-    PhotoDto storePhotoDto = savePhotos(file, photoBaseLocalPath, photoBaseUrlPath);
+    if(storePhotoRepository.existsByStore(store)) {
+      throw new RestApiException(EXIST_PHOTO_EXCEPTION);
+    }
+
+    PhotoDto storePhotoDto = new PhotoDto();
+    storePhotoDto.savePhotos(file, photoBaseLocalPath, photoBaseUrlPath);
 
     storePhotoDto.setStore(store);
 
     return storePhotoRepository.save(storePhotoDto.toStorePhotoEntity());
   }
 
+  @Transactional
+  public StorePhoto updateStorePhoto(Authentication authentication, MultipartFile file, Long storeId, String photoBaseLocalPath, String photoBaseUrlPath) {
+    Partner partner = getPartner(authentication);
+    Store store = storeRepository.findById(storeId).orElseThrow();
+
+    if(!Objects.equals(store.getPartner().getPartnerId(), partner.getPartnerId())) {
+      throw new RuntimeException();
+    }
+
+    storePhotoRepository.findByStore(store).ifPresent(photo -> {
+      photo.setDeletedAt(LocalDateTime.now());
+      storePhotoRepository.save(photo);
+    });
+
+    PhotoDto storePhotoDto = new PhotoDto();
+    storePhotoDto.savePhotos(file, photoBaseLocalPath, photoBaseUrlPath);
+
+    storePhotoDto.setStore(store);
+
+    return storePhotoRepository.save(storePhotoDto.toStorePhotoEntity());
+  }
+
+  @Transactional
   public StoreProfilePhoto createStoreProfilePhoto(Authentication authentication, MultipartFile file, long storeId,
       String profileBaseLocalPath, String profileBaseUrlPath) {
     Partner partner = getPartner(authentication);
@@ -114,79 +138,43 @@ public class StoreService {
       throw new RestApiException(MISMATCH_PARTNER_STORE);
     }
 
-    PhotoDto storeProfilePhotoDto = savePhotos(file, profileBaseLocalPath, profileBaseUrlPath);
+    if(storeProfilePhotoRepository.existsByStore(store)) {
+      throw new RestApiException(EXIST_PHOTO_EXCEPTION);
+    }
+
+    PhotoDto storeProfilePhotoDto = new PhotoDto();
+    storeProfilePhotoDto.savePhotos(file, profileBaseLocalPath, profileBaseUrlPath);
 
     storeProfilePhotoDto.setStore(store);
 
     return storeProfilePhotoRepository.save(storeProfilePhotoDto.toStoreProfilePhotoEntity());
   }
 
-  private PhotoDto savePhotos(MultipartFile file, String localPath, String urlPath) {
-    PhotoDto storePhotoDto = new PhotoDto();
-    String saveFilename = "";
-    String urlFilename = "";
+  @Transactional
+  public StoreProfilePhoto updateStoreProfilePhoto(Authentication authentication, MultipartFile file, Long storeId, String profileBaseLocalPath, String profileBaseUrlPath) {
+    Partner partner = getPartner(authentication);
+    Store store = storeRepository.findById(storeId).orElseThrow();
 
-    if (file != null) {
-      String originalFilename = file.getOriginalFilename();
-
-      String[] arrFilename = getNewSaveFile(localPath, urlPath, originalFilename);
-
-      saveFilename = arrFilename[0];
-      urlFilename = arrFilename[1];
-
-      try {
-        File newFile = new File(saveFilename);
-        FileCopyUtils.copy(file.getInputStream(), new FileOutputStream(newFile));
-      } catch (IOException e) {
-        log.warn(e.getMessage());
-        throw new RestApiException(FILE_SAVE_ERROR);
-      }
+    if(!Objects.equals(store.getPartner().getPartnerId(), partner.getPartnerId())) {
+      throw new RestApiException(MISMATCH_PARTNER_STORE);
     }
 
-    storePhotoDto.setUrl(urlFilename);
-    storePhotoDto.setPhotoName(saveFilename);
+    storeProfilePhotoRepository.findByStore(store).ifPresent(photo -> {
+      photo.setDeletedAt(LocalDateTime.now());
+      storeProfilePhotoRepository.save(photo);
+    });
 
-    return storePhotoDto;
+    PhotoDto storeProfilePhotoDto = new PhotoDto();
+    storeProfilePhotoDto.savePhotos(file, profileBaseLocalPath, profileBaseUrlPath);
+
+    storeProfilePhotoDto.setStore(store);
+
+    return storeProfilePhotoRepository.save(storeProfilePhotoDto.toStoreProfilePhotoEntity());
   }
 
   private Partner getPartner(Authentication authentication) {
-    return partnerRepository.findByEmail(authentication.getName()).orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
+    return partnerRepository.findByEmail(authentication.getName())
+        .orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
   }
 
-  private String[] getNewSaveFile(String baseLocalPath, String baseUrlPath, String originalFilename) {
-
-    LocalDate now = LocalDate.now();
-
-    String[] dirs = {
-        String.format("%s/%d/", baseLocalPath,now.getYear()),
-        String.format("%s/%d/%02d/", baseLocalPath, now.getYear(),now.getMonthValue()),
-        String.format("%s/%d/%02d/%02d/", baseLocalPath, now.getYear(), now.getMonthValue(), now.getDayOfMonth())};
-
-    String urlDir = String.format("%s/%d/%02d/%02d/", baseUrlPath, now.getYear(), now.getMonthValue(), now.getDayOfMonth());
-
-    for(String dir : dirs) {
-      File file = new File(dir);
-      if (!file.isDirectory()) {
-        file.mkdir();
-      }
-    }
-
-    String fileExtension = "";
-    if (originalFilename != null) {
-      int dotPos = originalFilename.lastIndexOf(".");
-      if (dotPos > -1) {
-        fileExtension = originalFilename.substring(dotPos + 1);
-      }
-    }
-
-    String uuid = UUID.randomUUID().toString().replaceAll("-", "");
-    String newFilename = String.format("%s%s", dirs[2], uuid);
-    String newUrlFilename = String.format("%s%s", urlDir, uuid);
-    if (fileExtension.length() > 0) {
-      newFilename += "." + fileExtension;
-      newUrlFilename += "." + fileExtension;
-    }
-
-    return new String[]{newFilename, newUrlFilename};
-  }
 }
