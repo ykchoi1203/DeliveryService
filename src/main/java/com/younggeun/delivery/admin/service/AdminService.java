@@ -2,6 +2,7 @@ package com.younggeun.delivery.admin.service;
 
 import static com.younggeun.delivery.global.entity.RoleType.ROLE_ADMIN;
 import static com.younggeun.delivery.global.exception.type.CommonErrorCode.CATEGORY_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.EXIST_CATEGORY_NAME;
 import static com.younggeun.delivery.global.exception.type.CommonErrorCode.NOT_ALLOW_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXISTS_SEQUENCE_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_PASSWORD_EXCEPTION;
@@ -69,6 +70,9 @@ public class AdminService implements UserDetailsService {
 
   public Category createCategory(CategoryDto categoryDto) {
     if(existIdx(categoryDto.getSequence())) throw new RestApiException(EXISTS_SEQUENCE_EXCEPTION);
+
+    if(categoryRepository.existsByName(categoryDto.getName())) throw new RestApiException(EXIST_CATEGORY_NAME);
+
     return categoryRepository.save(categoryDto.toEntity(categoryDto.getCategoryId()));
   }
 

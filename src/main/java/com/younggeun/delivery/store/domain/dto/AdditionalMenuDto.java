@@ -13,7 +13,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AdditionalMenuDto {
+public class AdditionalMenuDto implements Comparable<AdditionalMenuDto> {
   private Long additionalMenuId;
   private String menuName;
 
@@ -40,4 +40,10 @@ public class AdditionalMenuDto {
         .menu(menu)
         .build();
   }
+
+  @Override
+  public int compareTo(AdditionalMenuDto o) {
+    return sequence - o.getSequence();
+  }
+
 }

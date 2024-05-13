@@ -13,7 +13,8 @@ public enum CommonErrorCode implements ErrorCode {
   FILE_SAVE_ERROR(HttpStatus.BAD_REQUEST, "사진 저장에 실패했습니다."),
   PHOTO_NOT_FOUND(HttpStatus.BAD_REQUEST, "사진 저장에 실패했습니다."),
   NOT_ALLOW_EXCEPTION(HttpStatus.FORBIDDEN, "허가되지 않은 접근입니다."),
-  CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 카테고리가 존재하지 않습니다."),;
+  CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 카테고리가 존재하지 않습니다."),
+  EXIST_CATEGORY_NAME(HttpStatus.BAD_REQUEST, "해당 카테고리명이 이미 존재합니다."),;
   private final HttpStatus httpStatus;
   private final String message;
 }
