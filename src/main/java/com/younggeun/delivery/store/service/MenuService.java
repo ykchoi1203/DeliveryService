@@ -1,6 +1,5 @@
 package com.younggeun.delivery.store.service;
 
-import static com.younggeun.delivery.global.exception.type.CommonErrorCode.PHOTO_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.ADDITIONAL_MENU_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.ALREADY_EXIST_SEQUENCE;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.CANNOT_DELETE_CATEGORY_CAUSE_EXIST_MENU_BY_CATEGORY_ID;
@@ -12,6 +11,7 @@ import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMAT
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_CATEGORY_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
 
+import com.younggeun.delivery.global.entity.RoleType;
 import com.younggeun.delivery.global.exception.RestApiException;
 import com.younggeun.delivery.store.domain.AdditionalMenuRepository;
 import com.younggeun.delivery.store.domain.MenuCategoryRepository;
@@ -21,6 +21,7 @@ import com.younggeun.delivery.store.domain.StoreRepository;
 import com.younggeun.delivery.store.domain.dto.AdditionalMenuDto;
 import com.younggeun.delivery.store.domain.dto.MenuCategoryDto;
 import com.younggeun.delivery.store.domain.dto.MenuDto;
+import com.younggeun.delivery.store.domain.dto.MenuListDto;
 import com.younggeun.delivery.store.domain.dto.PhotoDto;
 import com.younggeun.delivery.store.domain.entity.AdditionalMenu;
 import com.younggeun.delivery.store.domain.entity.Menu;
@@ -28,8 +29,12 @@ import com.younggeun.delivery.store.domain.entity.MenuCategory;
 import com.younggeun.delivery.store.domain.entity.MenuPhoto;
 import com.younggeun.delivery.store.domain.entity.Store;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -48,22 +53,40 @@ public class MenuService {
   private final MenuPhotoRepository menuPhotoRepository;
   private final AdditionalMenuRepository additionalMenuRepository;
 
-  public List<MenuDto> selectMenu(Authentication authentication, String storeId) {
-    Store store = getStoreWithMatchUser(authentication, storeId);
+  public List<MenuListDto> selectMenu(Authentication authentication, String storeId, RoleType type) {
+    Store store = type == RoleType.ROLE_PARTNER ? getStoreWithMatchUser(authentication, storeId) : getStore(storeId);
 
-    List<MenuCategory> menuCategoryList = menuCategoryRepository.findAllByStore(store);
-    List<Long> menuCategoryIdList = menuCategoryList.stream().map(MenuCategory::getCategoryId).toList();
+    // 메뉴 카테고리 및 관련 메뉴를 한 번에 가져오기
+    List<MenuCategory> menuCategoryList = menuCategoryRepository.findAllByStoreOrderBySequence(store);
+    List<MenuListDto> menuListDtos = menuCategoryList.stream().map(MenuListDto::new).collect(Collectors.toList());
 
-    return menuRepository.findAllByMenuCategoryId(menuCategoryIdList).stream().map(menu -> {
-      MenuDto menuDto = new MenuDto(menu);
-      menuDto.setAdditionalMenuList(additionalMenuRepository.findAllByMenu(menu).stream().map(
-          AdditionalMenuDto::new
-      ).toList());
-      if(menuPhotoRepository.existsByMenu(menu)) {
-        menuDto.setMenuPhoto(new PhotoDto(menuPhotoRepository.findByMenu(menu).orElseThrow(() -> new RestApiException(PHOTO_NOT_FOUND))));
-      }
-      return menuDto;
-    }).toList();
+    Map<Long, MenuListDto> menuListDtoMap = menuListDtos.stream().collect(Collectors.toMap(MenuListDto::getCategoryId, Function.identity()));
+
+    // 카테고리별로 메뉴를 가져오고 DTO로 변환
+    List<Menu> menuList = menuRepository.findAllByMenuCategoryId(menuCategoryList.stream().map(MenuCategory::getCategoryId).collect(Collectors.toList()));
+    Map<Long, List<Menu>> menuMap = menuList.stream().collect(Collectors.groupingBy(menu -> menu.getMenuCategory().getCategoryId()));
+
+    List<Long> menuIdList = menuList.stream().map(Menu::getMenuId).collect(Collectors.toList());
+
+    // 메뉴 사진을 가져오고 메뉴 ID를 키로하여 매핑
+    Map<Long, PhotoDto> menuPhotoMap = menuPhotoRepository.findAllByMenuId(menuIdList).stream()
+        .collect(Collectors.toMap(photo -> photo.getMenu().getMenuId(), PhotoDto::new));
+
+
+    // 메뉴 DTO에 메뉴 사진 및 추가 메뉴 매핑
+    for (MenuCategory menuCategory : menuCategoryList) {
+      MenuListDto menuListDto = menuListDtoMap.get(menuCategory.getCategoryId());
+      List<MenuDto> menuDtoList = menuMap.getOrDefault(menuCategory.getCategoryId(), Collections.emptyList()).stream()
+          .map(menu -> {
+            MenuDto menuDto = new MenuDto(menu);
+            menuDto.setMenuPhoto(menuPhotoMap.get(menu.getMenuId()));
+            return menuDto;
+          })
+          .collect(Collectors.toList());
+      menuListDto.setMenuList(menuDtoList);
+    }
+
+    return menuListDtos;
   }
 
   public MenuCategory createStoreCategory(Authentication authentication, MenuCategoryDto menuCategoryDto, String storeId) {
@@ -112,6 +135,10 @@ public class MenuService {
       throw new RestApiException(MISMATCH_PARTNER_STORE);
     }
     return store;
+  }
+
+  private Store getStore(String storeId) {
+    return storeRepository.findById(Long.parseLong(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
   }
 
 
@@ -232,5 +259,15 @@ public class MenuService {
     Menu menu = menuRepository.findById(Long.valueOf(menuId)).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
     menu.setSoldOutStatus(soldOut);
     return new MenuDto(menuRepository.save(menu));
+  }
+
+  public MenuDto selectMenuDetails(Authentication authentication, String storeId, String menuId, RoleType type) {
+    if(type == RoleType.ROLE_PARTNER)
+      getStoreWithMatchUser(authentication, storeId);
+    Menu menu = menuRepository.findById(Long.valueOf(menuId)).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
+    MenuDto menuDto = new MenuDto(menu);
+    menuDto.setAdditionalMenuList(additionalMenuRepository.findAllByMenu(menu).stream().map(AdditionalMenuDto::new).toList());
+
+    return menuDto;
   }
 }

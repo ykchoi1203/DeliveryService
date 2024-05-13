@@ -27,6 +27,15 @@ public class MenuDto {
   private PhotoDto menuPhoto;
   private List<AdditionalMenuDto> additionalMenuList;
 
+  public MenuDto(Long menuId, String menuName, int price, String description, boolean soldOutStatus, Long categoryId) {
+    this.menuId = menuId;
+    this.menuName = menuName;
+    this.price = price;
+    this.description = description;
+    this.soldOutStatus = soldOutStatus;
+    this.categoryId = categoryId;
+  }
+
   public MenuDto(Menu menu) {
     this.menuId = menu.getMenuId();
     this.menuName = menu.getMenuName();

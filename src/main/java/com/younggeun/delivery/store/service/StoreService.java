@@ -2,6 +2,9 @@ package com.younggeun.delivery.store.service;
 
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXIST_PHOTO_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_PARTNER_STORE;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_CATEGORY_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.UserErrorCode.ADDRESS_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_USER_ADDRESS_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
 import com.younggeun.delivery.global.exception.RestApiException;
@@ -17,7 +20,14 @@ import com.younggeun.delivery.store.domain.entity.Category;
 import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.store.domain.entity.StorePhoto;
 import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
+import com.younggeun.delivery.store.domain.type.OrderType;
+import com.younggeun.delivery.user.domain.DeliveryAddressRepository;
+import com.younggeun.delivery.user.domain.UserRepository;
+import com.younggeun.delivery.user.domain.dto.DeliveryAddressDto;
+import com.younggeun.delivery.user.domain.entity.DeliveryAddress;
+import com.younggeun.delivery.user.domain.entity.User;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,25 +47,13 @@ public class StoreService {
   private final StoreProfilePhotoRepository storeProfilePhotoRepository;
   private final PartnerRepository partnerRepository;
   private final CategoryRepository categoryRepository;
+  private final UserRepository userRepository;
+  private final DeliveryAddressRepository deliveryAddressRepository;
 
   public Page<StoreDto> selectPartnerStore(Authentication authentication, Pageable pageable) {
     Partner partner = getPartner(authentication);
-    Page<Store> stores = storeRepository.findAllByPartner(partner, pageable);
 
-    return stores.map(store -> {
-      StoreDto storeDto = new StoreDto(store);
-
-      StorePhoto storePhoto = storePhotoRepository.findByStore(store)
-          .orElse(null);
-
-      storeDto.setStorePhoto(storePhoto);
-
-      StoreProfilePhoto storeProfilePhoto = storeProfilePhotoRepository.findByStore(store).orElse(null);
-
-      storeDto.setStoreProfilePhoto(storeProfilePhoto);
-
-      return storeDto;
-    });
+    return storeToDto(storeRepository.findAllByPartner(partner, pageable));
   }
 
   @Transactional
@@ -176,5 +174,88 @@ public class StoreService {
     return partnerRepository.findByEmail(authentication.getName())
         .orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
   }
+
+  public List<StoreDto> selectAllStoreByAddress(Authentication authentication, DeliveryAddressDto deliveryAddressDto,
+      OrderType type) {
+    User user = getUser(authentication);
+    DeliveryAddress deliveryAddress = getDeliveryAddress(user, deliveryAddressDto.getAddressId());
+
+    if(type == OrderType.star) {
+      return storeToDto(storeRepository.findAllByAddress2OrderByStar(deliveryAddress.getAddress2()));
+    } else if(type == OrderType.dist) {
+      return storeToDto(storeRepository.findAllByAddress2OrderByDist(deliveryAddress.getAddress2(), deliveryAddress.getLatitude(), deliveryAddress.getLongitude()));
+    } else if(type == OrderType.cost) {
+      return storeToDto(storeRepository.findAllByAddress2OrderByDeliveryCost(deliveryAddress.getAddress2()));
+    } else {
+      return storeToDto(storeRepository.findAllByAddress2OrderByDeliveryCost(deliveryAddress.getAddress2()));
+    }
+  }
+
+  private User getUser(Authentication authentication) {
+    return userRepository.findByEmail(authentication.getName())
+        .orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
+  }
+
+  private DeliveryAddress getDeliveryAddress(User user, Long deliveryAddressId) {
+    DeliveryAddress deliveryAddress = deliveryAddressRepository.findById(deliveryAddressId).orElseThrow(() -> new RestApiException(ADDRESS_NOT_FOUND));
+
+    if(!Objects.equals(user.getUserId(), deliveryAddress.getUser().getUserId())) {
+      throw new RestApiException(MISMATCH_USER_ADDRESS_EXCEPTION);
+    }
+
+    return deliveryAddress;
+  }
+
+  private Page<StoreDto> storeToDto(Page<Store> list) {
+    return list.map(store -> {
+      StoreDto storeDto = new StoreDto(store);
+
+      StorePhoto storePhoto = storePhotoRepository.findByStore(store)
+          .orElse(null);
+
+      storeDto.setStorePhoto(storePhoto);
+
+      StoreProfilePhoto storeProfilePhoto = storeProfilePhotoRepository.findByStore(store).orElse(null);
+
+      storeDto.setStoreProfilePhoto(storeProfilePhoto);
+
+      return storeDto;
+    });
+  }
+
+  private List<StoreDto> storeToDto(List<Store> list) {
+    return list.stream().map(store -> {
+      StoreDto storeDto = new StoreDto(store);
+
+      StorePhoto storePhoto = storePhotoRepository.findByStore(store)
+          .orElse(null);
+
+      storeDto.setStorePhoto(storePhoto);
+
+      StoreProfilePhoto storeProfilePhoto = storeProfilePhotoRepository.findByStore(store).orElse(null);
+
+      storeDto.setStoreProfilePhoto(storeProfilePhoto);
+
+      return storeDto;
+    }).toList();
+  }
+
+  public List<StoreDto> selectStoreByCategory(Authentication authentication, Long categoryId, DeliveryAddressDto deliveryAddressDto,
+      OrderType oT) {
+    User user = getUser(authentication);
+    DeliveryAddress deliveryAddress = getDeliveryAddress(user, deliveryAddressDto.getAddressId());
+    Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
+
+    if(oT == OrderType.star) {
+      return storeToDto(storeRepository.findAllByCategoryOrderByStar(deliveryAddress.getAddress2(), category.getCategoryId()));
+    } else if(oT == OrderType.dist) {
+      return storeToDto(storeRepository.findAllByCategoryOrderByDist(deliveryAddress.getAddress2(), category.getCategoryId(), deliveryAddress.getLatitude(), deliveryAddress.getLongitude()));
+    } else if(oT == OrderType.cost) {
+      return storeToDto(storeRepository.findAllByAddress2AndCategoryOrderByDeliveryCost(deliveryAddress.getAddress2(), category));
+    } else {
+      return storeToDto(storeRepository.findAllByAddress2AndCategory(deliveryAddress.getAddress2(), category));
+    }
+  }
+
 
 }

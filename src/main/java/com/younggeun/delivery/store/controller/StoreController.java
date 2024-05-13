@@ -1,7 +1,9 @@
 package com.younggeun.delivery.store.controller;
 
 import com.younggeun.delivery.store.domain.dto.StoreDto;
+import com.younggeun.delivery.store.domain.type.OrderType;
 import com.younggeun.delivery.store.service.StoreService;
+import com.younggeun.delivery.user.domain.dto.DeliveryAddressDto;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +90,39 @@ public class StoreController {
       @PathVariable String storeId) {
 
     var result = storeService.updateStoreProfilePhoto(authentication, file, Long.parseLong(storeId), profileBaseLocalPath, profileBaseUrlPath);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "user 상점 전체 조회", description = "deliveryAddressDto, Pageable")
+  @GetMapping("/users/store")
+  @PreAuthorize("hasRole('USER')")
+  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false) String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
+    OrderType type;
+
+    if(orderType == null) {
+      type = OrderType.star;
+    } else {
+      type = OrderType.valueOf(orderType);
+    }
+
+    var result = storeService.selectAllStoreByAddress(authentication,deliveryAddressDto, type);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "user 상점 카테고리 조회", description = "deliveryAddressDto, Pageable")
+  @GetMapping("/users/store/{categoryId}")
+  @PreAuthorize("hasRole('USER')")
+  public ResponseEntity<?> selectStoreByCategory(Authentication authentication,@RequestBody DeliveryAddressDto deliveryAddressDto,
+      @PathVariable String categoryId, @RequestParam(name = "orderType", required = false) String orderType) {
+    OrderType type;
+
+    if(orderType == null) {
+      type = OrderType.star;
+    } else {
+      type = OrderType.valueOf(orderType);
+    }
+
+    var result = storeService.selectStoreByCategory(authentication, Long.valueOf(categoryId), deliveryAddressDto, type);
     return ResponseEntity.ok(result);
   }
 
