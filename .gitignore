@@ -171,4 +171,7 @@ $RECYCLE.BIN/
 .idea/
 *.lock
 build/tmp
-.gitignore
+src/main/java/com/younggeun/delivery/global/config/CacheConfig.java
+src/main/java/com/younggeun/delivery/DeliveryApplication.java
+src/main/java/com/younggeun/delivery/user/domain/entity/Cart.java
+src/main/java/com/younggeun/delivery/user/domain/dto/CartDto.java
