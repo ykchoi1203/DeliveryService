@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +45,7 @@ public class PartnerController {
   // 파트너 정보 조회
   @Operation(summary = "partner 정보 조회", description = "")
   @GetMapping
+  @PreAuthorize("hasRole('PARTNER')")
   public ResponseEntity<?> getPartner(Authentication authentication) {
     var result = this.partnerService.getPartner(authentication);
 
@@ -53,6 +55,7 @@ public class PartnerController {
   // 파트너 정보 수정 ( 비밀번호, 주소, 전화번호, 이름 )
   @Operation(summary = "partner 정보 수정", description = "request")
   @PutMapping
+  @PreAuthorize("hasRole('PARTNER')")
   public ResponseEntity<?> update(@RequestBody PartnerDto request, Authentication authentication) {
     var result = this.partnerService.updatePartner(request, authentication);
 
@@ -62,6 +65,7 @@ public class PartnerController {
   // 파트너 탈퇴
   @Operation(summary = "partner 탈퇴", description = "request")
   @PutMapping("/delete")
+  @PreAuthorize("hasRole('PARTNER')")
   public ResponseEntity<?> delete(Authentication authentication) {
     var result = this.partnerService.deletePartner(authentication);
 

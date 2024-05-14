@@ -17,7 +17,6 @@ public class CategoryDto {
   private String name;
   private int sequence;
 
-
   public Category toEntity(Long categoryId) {
     return Category.builder()
         .categoryId(categoryId)

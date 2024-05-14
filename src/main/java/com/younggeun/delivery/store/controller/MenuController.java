@@ -1,5 +1,6 @@
 package com.younggeun.delivery.store.controller;
 
+import com.younggeun.delivery.global.entity.RoleType;
 import com.younggeun.delivery.store.domain.dto.AdditionalMenuDto;
 import com.younggeun.delivery.store.domain.dto.MenuCategoryDto;
 import com.younggeun.delivery.store.domain.dto.MenuDto;
@@ -33,12 +34,12 @@ public class MenuController {
   @Value("${menu.photo.baseUrlPath}")
   private String menuBaseUrlPath;
 
-  @Operation(summary = "partner 상점 메뉴 조회", description = "storeId")
+  @Operation(summary = "partner 상점 메뉴 전체 조회", description = "storeId")
   @GetMapping("/partners/{storeId}/menu")
   @PreAuthorize("hasRole('PARTNER')")
   public ResponseEntity<?> selectPartnerStoreMenu(Authentication authentication,
       @PathVariable String storeId) {
-    var result = menuService.selectMenu(authentication, storeId);
+    var result = menuService.selectMenu(authentication, storeId, RoleType.ROLE_PARTNER);
     return ResponseEntity.ok(result);
   }
 
@@ -66,6 +67,15 @@ public class MenuController {
   public ResponseEntity<?> createStoreMenu(Authentication authentication, @RequestBody MenuDto menuDto,
       @PathVariable String storeId) {
     var result = menuService.createStoreMenu(authentication, menuDto, storeId);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "partner 상점 메뉴 상세 조회", description = "menuDto, storeId")
+  @GetMapping("/partners/{storeId}/menu/{menuId}")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> selectMenuDetails(Authentication authentication,
+      @PathVariable String storeId, @PathVariable String menuId) {
+    var result = menuService.selectMenuDetails(authentication, storeId, menuId, RoleType.ROLE_PARTNER);
     return ResponseEntity.ok(result);
   }
 
@@ -185,6 +195,24 @@ public class MenuController {
   public ResponseEntity<?> updateResaleAdditionalMenu(Authentication authentication
       ,@PathVariable String storeId, @PathVariable String additionalId) {
     var result = menuService.updateSoldOutAdditionalMenu(authentication, additionalId, storeId, false);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "user 상점 메뉴 조회", description = "storeId")
+  @GetMapping("/users/{storeId}/menu")
+  @PreAuthorize("hasRole('USER')")
+  public ResponseEntity<?> selectUserStoreMenu(Authentication authentication,
+      @PathVariable String storeId) {
+    var result = menuService.selectMenu(authentication, storeId, RoleType.ROLE_USER);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "user 상점 메뉴 상세 조회", description = "storeId")
+  @GetMapping("/users/{storeId}/menu/{menuId}")
+  @PreAuthorize("hasRole('USER')")
+  public ResponseEntity<?> selectUserMenuDetails(Authentication authentication,
+      @PathVariable String storeId, @PathVariable String menuId) {
+    var result = menuService.selectMenuDetails(authentication, storeId, menuId, RoleType.ROLE_USER);
     return ResponseEntity.ok(result);
   }
 
