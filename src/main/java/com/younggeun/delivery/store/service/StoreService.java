@@ -180,11 +180,11 @@ public class StoreService {
     User user = getUser(authentication);
     DeliveryAddress deliveryAddress = getDeliveryAddress(user, deliveryAddressDto.getAddressId());
 
-    if(type == OrderType.star) {
+    if(type == OrderType.STAR) {
       return storeToDto(storeRepository.findAllByAddress2OrderByStar(deliveryAddress.getAddress2()));
-    } else if(type == OrderType.dist) {
+    } else if(type == OrderType.DIST) {
       return storeToDto(storeRepository.findAllByAddress2OrderByDist(deliveryAddress.getAddress2(), deliveryAddress.getLatitude(), deliveryAddress.getLongitude()));
-    } else if(type == OrderType.cost) {
+    } else if(type == OrderType.COST) {
       return storeToDto(storeRepository.findAllByAddress2OrderByDeliveryCost(deliveryAddress.getAddress2()));
     } else {
       return storeToDto(storeRepository.findAllByAddress2OrderByDeliveryCost(deliveryAddress.getAddress2()));
@@ -246,11 +246,11 @@ public class StoreService {
     DeliveryAddress deliveryAddress = getDeliveryAddress(user, deliveryAddressDto.getAddressId());
     Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
 
-    if(oT == OrderType.star) {
+    if(oT == OrderType.STAR) {
       return storeToDto(storeRepository.findAllByCategoryOrderByStar(deliveryAddress.getAddress2(), category.getCategoryId()));
-    } else if(oT == OrderType.dist) {
+    } else if(oT == OrderType.DIST) {
       return storeToDto(storeRepository.findAllByCategoryOrderByDist(deliveryAddress.getAddress2(), category.getCategoryId(), deliveryAddress.getLatitude(), deliveryAddress.getLongitude()));
-    } else if(oT == OrderType.cost) {
+    } else if(oT == OrderType.COST) {
       return storeToDto(storeRepository.findAllByAddress2AndCategoryOrderByDeliveryCost(deliveryAddress.getAddress2(), category));
     } else {
       return storeToDto(storeRepository.findAllByAddress2AndCategory(deliveryAddress.getAddress2(), category));

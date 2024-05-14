@@ -96,14 +96,8 @@ public class StoreController {
   @Operation(summary = "user 상점 전체 조회", description = "deliveryAddressDto, Pageable")
   @GetMapping("/users/store")
   @PreAuthorize("hasRole('USER')")
-  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false) String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
-    OrderType type;
-
-    if(orderType == null) {
-      type = OrderType.star;
-    } else {
-      type = OrderType.valueOf(orderType);
-    }
+  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
+    OrderType type = OrderType.valueOf(orderType);
 
     var result = storeService.selectAllStoreByAddress(authentication,deliveryAddressDto, type);
     return ResponseEntity.ok(result);
@@ -113,14 +107,8 @@ public class StoreController {
   @GetMapping("/users/store/{categoryId}")
   @PreAuthorize("hasRole('USER')")
   public ResponseEntity<?> selectStoreByCategory(Authentication authentication,@RequestBody DeliveryAddressDto deliveryAddressDto,
-      @PathVariable String categoryId, @RequestParam(name = "orderType", required = false) String orderType) {
-    OrderType type;
-
-    if(orderType == null) {
-      type = OrderType.star;
-    } else {
-      type = OrderType.valueOf(orderType);
-    }
+      @PathVariable String categoryId, @RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType) {
+    OrderType type = OrderType.valueOf(orderType);
 
     var result = storeService.selectStoreByCategory(authentication, Long.valueOf(categoryId), deliveryAddressDto, type);
     return ResponseEntity.ok(result);

@@ -17,10 +17,17 @@ spring:
   jwt:
     secret: c3ByaW5nLWJvb3QtcHJvamVjdC1kZWxpdmVyeS1zZXJ2aWNlLWp3dC1zZWNyZXQta2V5Cgbg
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 logging:
   level:
     root: INFO
     com.younggeun.delivery: DEBUG
+
+
 
 store:
   photo:
