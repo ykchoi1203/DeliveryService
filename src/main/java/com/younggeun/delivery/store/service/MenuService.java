@@ -63,15 +63,14 @@ public class MenuService {
     Map<Long, MenuListDto> menuListDtoMap = menuListDtos.stream().collect(Collectors.toMap(MenuListDto::getCategoryId, Function.identity()));
 
     // 카테고리별로 메뉴를 가져오고 DTO로 변환
-    List<Menu> menuList = menuRepository.findAllByMenuCategoryId(menuCategoryList.stream().map(MenuCategory::getCategoryId).collect(Collectors.toList()));
+    List<Menu> menuList = menuRepository.findAllByMenuCategoryCategoryIdIn(menuCategoryList.stream().map(MenuCategory::getCategoryId).collect(Collectors.toList()));
     Map<Long, List<Menu>> menuMap = menuList.stream().collect(Collectors.groupingBy(menu -> menu.getMenuCategory().getCategoryId()));
 
     List<Long> menuIdList = menuList.stream().map(Menu::getMenuId).collect(Collectors.toList());
 
     // 메뉴 사진을 가져오고 메뉴 ID를 키로하여 매핑
-    Map<Long, PhotoDto> menuPhotoMap = menuPhotoRepository.findAllByMenuId(menuIdList).stream()
+    Map<Long, PhotoDto> menuPhotoMap = menuPhotoRepository.findAllByMenuMenuIdIn(menuIdList).stream()
         .collect(Collectors.toMap(photo -> photo.getMenu().getMenuId(), PhotoDto::new));
-
 
     // 메뉴 DTO에 메뉴 사진 및 추가 메뉴 매핑
     for (MenuCategory menuCategory : menuCategoryList) {
