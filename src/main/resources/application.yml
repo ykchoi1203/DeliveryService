@@ -2,25 +2,14 @@ spring:
   application:
     name: Delivery
 
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/delivery
-    username: delivery
-    password: delivery
+  profiles:
+    group:
+      logging: dev, log
+    active: dev
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    defer-datasource-initialization: true
-
-  jwt:
-    secret: c3ByaW5nLWJvb3QtcHJvamVjdC1kZWxpdmVyeS1zZXJ2aWNlLWp3dC1zZWNyZXQta2V5Cgbg
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
+  config:
+    import:
+      - classpath:/yaml/application-dev.yml
 
 logging:
   level:
@@ -29,14 +18,12 @@ logging:
 
 
 
-store:
-  photo:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/photo/files
-    baseUrlPath: /files
-  profile:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/profile/files
-    baseUrlPath: /files
-menu:
-  photo:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/menu/photo/files
-    baseUrlPath: /files
+
+
+#kakaopay:
+#  admin-key: 92308f2141a289808ff6fba12e4fc0b1
+#  dev-key: DEV4C6A9948C4A0FC29A998B38A62EEA2024EE6F
+#  cid: 76D16B528843874742CD
+#  ready-url-dev: https://open-api.kakaopay.com/online/v1/payment/ready
+#  approve-url-dev: https://open-api.kakaopay.com/online/v1/payment/approve
+#  cancel-url-dev: https://open-api.kakaopay.com/online/v1/payment/cancel

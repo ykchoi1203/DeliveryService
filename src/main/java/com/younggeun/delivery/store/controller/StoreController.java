@@ -47,6 +47,22 @@ public class StoreController {
     return ResponseEntity.ok(result);
   }
 
+  @Operation(summary = "partner 상점 open", description = "storeId")
+  @PutMapping("/partners/store/{storeId}/open")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> openStore(Authentication authentication, @PathVariable String storeId) {
+    var result = storeService.changeOpened(authentication, storeId, true);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "partner 상점 close", description = "storeId")
+  @PutMapping("/partners/store/{storeId}/close")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> closeStore(Authentication authentication, @PathVariable String storeId) {
+    var result = storeService.changeOpened(authentication, storeId, false);
+    return ResponseEntity.ok(result);
+  }
+
   @Operation(summary = "partner 상점 추가", description = "request")
   @PostMapping("/partners/store")
   @PreAuthorize("hasRole('PARTNER')")

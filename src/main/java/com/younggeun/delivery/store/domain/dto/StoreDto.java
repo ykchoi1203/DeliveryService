@@ -40,6 +40,7 @@ public class StoreDto {
   private boolean accessStatus;
   private Long partnerId;
   private Long categoryId;
+  private boolean isOpened;
 
   private StorePhoto storePhoto;
   private StoreProfilePhoto storeProfilePhoto;
@@ -64,6 +65,7 @@ public class StoreDto {
     accessStatus = store.isAccessStatus();
     categoryId = store.getCategory().getCategoryId();
     partnerId = store.getPartner().getPartnerId();
+    isOpened = store.isOpened();
   }
 
   public Store toEntity() {
@@ -78,6 +80,7 @@ public class StoreDto {
         .businessNumber(businessNumber)
         .openTime(openTime)
         .endTime(endTime)
+        .isOpened(isOpened)
         .totalStars(totalStars)
         .totalReviews(totalReviews)
         .leastOrderCost(leastOrderCost)

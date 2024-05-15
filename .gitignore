@@ -58,5 +58,6 @@ $RECYCLE.BIN/
 .gradle/
 .idea/
 *.lock
-build/tmp
+build/
 .gitignore
+application-dev.yml

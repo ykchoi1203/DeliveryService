@@ -100,7 +100,7 @@
   - 해당 메뉴의 추가 메뉴만 삭제할 수 있다.
 
 - [ ] 주문
-  - POST /order
+  - POST /orderTable
   - 사용자는 주문할 수 있다. 요청 사항을 입력받는다. 가게의 최소 주문 금액보다 총 주문 금액이 작다면 주문 할 수 없다.
 
 - [ ] 결제
@@ -111,16 +111,16 @@
   - 결제가 승인되지 않는다면 해당 주문은 삭제된다.
 
 - [ ] 한달간 총 구매 금액 + 한달간 주문한 카테고리 별 주문 횟수 조회
-  - GET /order/month
+  - GET /orderTable/month
   - 사용자는 현재 달의 총 구매 금액, 한달간 주문한 카테고리 별 주문 횟수 조회을 조회할 수 있다.
 
 - [ ] 주문 내역 확인
-  - GET /order/list
+  - GET /orderTable/list
   - 사용자는 주문한 내역을 확인 할 수 있다.
   - 페이징 처리를 통해 한번에 10개씩 조회 할 수 있다.
   
 - [ ] 주문 내역 상세보기
-  - GET /order?order={orderId}
+  - GET /orderTable?orderTable={orderId}
   - 사용자는 선택한 주문 내역의 정보를 확인 할 수 있다.
 
 - [ ] 리뷰 작성하기
@@ -268,16 +268,16 @@
   - 사용자는 메뉴에 대한 추가 메뉴를 삭제할 수 있다.
 
 - [ ] 주문 조회
-  - GET /order/list
+  - GET /orderTable/list
   - 사용자는 현재 날짜의 주문을 조회할 수 있다. 최신 순으로 정렬된다.
   - 페이징 처리를 통해 최대 10개씩 조회 가능하다.
 
 - [ ] 주문 상세 조회
-  - GET /order/detail?order={orderId}
+  - GET /orderTable/detail?orderTable={orderId}
   - 사용자는 해당 주문을 상세 조회할 수 있다.
 
 - [ ] 배달 완료 처리
-  - PUT /order/delivery/{orderId}
+  - PUT /orderTable/delivery/{orderId}
   - 사용자는 해당 주문의 배달 완료 처리할 수 있다.
 
 - [ ] 영업 상태 변경(오픈 / 마감)

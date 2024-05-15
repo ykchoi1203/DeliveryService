@@ -22,7 +22,7 @@ public class MenuDto {
   private String description;
   private Long categoryId;
   private boolean soldOutStatus;
-  private MenuCategory menuCategory;
+  private MenuCategoryDto menuCategory;
 
   private PhotoDto menuPhoto;
   private List<AdditionalMenuDto> additionalMenuList;
@@ -42,7 +42,7 @@ public class MenuDto {
     this.price = menu.getPrice();
     this.description = menu.getDescription();
     this.soldOutStatus = menu.isSoldOutStatus();
-    this.menuCategory = menu.getMenuCategory();
+    this.menuCategory = new MenuCategoryDto(menu.getMenuCategory());
     this.categoryId = menu.getMenuCategory().getCategoryId();
   }
 
