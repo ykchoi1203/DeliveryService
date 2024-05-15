@@ -2,14 +2,14 @@ spring:
   application:
     name: Delivery
 
+  profiles:
+    group:
+      logging: dev, log
+    active: dev
+
   config:
     import:
       - classpath:/yaml/application-dev.yml
-    profiles:
-      group:
-        logging: dev, log
-      active: logging
-
 
 logging:
   level:
