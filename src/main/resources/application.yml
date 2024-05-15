@@ -15,15 +15,3 @@ logging:
   level:
     root: INFO
     com.younggeun.delivery: DEBUG
-
-
-
-
-
-#kakaopay:
-#  admin-key: 92308f2141a289808ff6fba12e4fc0b1
-#  dev-key: DEV4C6A9948C4A0FC29A998B38A62EEA2024EE6F
-#  cid: 76D16B528843874742CD
-#  ready-url-dev: https://open-api.kakaopay.com/online/v1/payment/ready
-#  approve-url-dev: https://open-api.kakaopay.com/online/v1/payment/approve
-#  cancel-url-dev: https://open-api.kakaopay.com/online/v1/payment/cancel
