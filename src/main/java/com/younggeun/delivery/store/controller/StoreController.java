@@ -47,6 +47,22 @@ public class StoreController {
     return ResponseEntity.ok(result);
   }
 
+  @Operation(summary = "partner 상점 open", description = "storeId")
+  @PutMapping("/partners/store/{storeId}/open")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> openStore(Authentication authentication, @PathVariable String storeId) {
+    var result = storeService.changeOpened(authentication, storeId, true);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "partner 상점 close", description = "storeId")
+  @PutMapping("/partners/store/{storeId}/close")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> closeStore(Authentication authentication, @PathVariable String storeId) {
+    var result = storeService.changeOpened(authentication, storeId, false);
+    return ResponseEntity.ok(result);
+  }
+
   @Operation(summary = "partner 상점 추가", description = "request")
   @PostMapping("/partners/store")
   @PreAuthorize("hasRole('PARTNER')")
@@ -96,14 +112,8 @@ public class StoreController {
   @Operation(summary = "user 상점 전체 조회", description = "deliveryAddressDto, Pageable")
   @GetMapping("/users/store")
   @PreAuthorize("hasRole('USER')")
-  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false) String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
-    OrderType type;
-
-    if(orderType == null) {
-      type = OrderType.star;
-    } else {
-      type = OrderType.valueOf(orderType);
-    }
+  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
+    OrderType type = OrderType.valueOf(orderType);
 
     var result = storeService.selectAllStoreByAddress(authentication,deliveryAddressDto, type);
     return ResponseEntity.ok(result);
@@ -113,14 +123,8 @@ public class StoreController {
   @GetMapping("/users/store/{categoryId}")
   @PreAuthorize("hasRole('USER')")
   public ResponseEntity<?> selectStoreByCategory(Authentication authentication,@RequestBody DeliveryAddressDto deliveryAddressDto,
-      @PathVariable String categoryId, @RequestParam(name = "orderType", required = false) String orderType) {
-    OrderType type;
-
-    if(orderType == null) {
-      type = OrderType.star;
-    } else {
-      type = OrderType.valueOf(orderType);
-    }
+      @PathVariable String categoryId, @RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType) {
+    OrderType type = OrderType.valueOf(orderType);
 
     var result = storeService.selectStoreByCategory(authentication, Long.valueOf(categoryId), deliveryAddressDto, type);
     return ResponseEntity.ok(result);

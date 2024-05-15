@@ -36,7 +36,7 @@ public class AdditionalMenuDto implements Comparable<AdditionalMenuDto> {
         .menuName(menuName)
         .sequence(sequence)
         .price(price)
-        .soldOutStatus(true)
+        .soldOutStatus(false)
         .menu(menu)
         .build();
   }

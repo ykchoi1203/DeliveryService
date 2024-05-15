@@ -1,6 +1,7 @@
 package com.younggeun.delivery.store.domain.entity;
 
 import com.younggeun.delivery.global.entity.BaseEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,12 +28,14 @@ public class MenuPhoto extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long menuPhotoId;
 
+  @Column(nullable = false)
   private String url;
+  @Column(nullable = false)
   private String photoName;
 
   private LocalDateTime deletedAt;
 
   @ManyToOne
-  @JoinColumn(name = "menu_id")
+  @JoinColumn(name = "menu_id", nullable = false)
   private Menu menu;
 }

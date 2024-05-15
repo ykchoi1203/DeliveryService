@@ -1,6 +1,7 @@
 package com.younggeun.delivery.store.domain.entity;
 
 import com.younggeun.delivery.global.entity.BaseEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,15 +28,17 @@ public class AdditionalMenu extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long additionalMenuId;
 
+  @Column(nullable = false)
   private String menuName;
-
+  @Column(nullable = false, columnDefinition = "INT CHECK (price >= 0)")
   private int price;
+  @Column(nullable = false, columnDefinition = "INT CHECK (sequence > 0)")
   private int sequence;
 
   private boolean soldOutStatus;
   private LocalDateTime deletedAt;
 
   @ManyToOne
-  @JoinColumn(name = "menu_id")
+  @JoinColumn(name = "menu_id", nullable = false)
   private Menu menu;
 }

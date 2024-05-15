@@ -1,6 +1,7 @@
 package com.younggeun.delivery.store.domain.entity;
 
 import com.younggeun.delivery.global.entity.BaseEntity;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,12 +29,14 @@ public class StorePhoto extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long storePhotoId;
 
+  @Column(nullable = false)
   private String url;
+  @Column(nullable = false)
   private String photoName;
 
   private LocalDateTime deletedAt;
 
   @ManyToOne
-  @JoinColumn(name = "store_id")
+  @JoinColumn(name = "store_id", nullable = false)
   private Store store;
 }

@@ -25,11 +25,11 @@ public class Wish {
   private Long wishId;
 
   @ManyToOne
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
   @ManyToOne
-  @JoinColumn(name = "store_id")
+  @JoinColumn(name = "store_id", nullable = false)
   private Store store;
 
   @CreatedDate

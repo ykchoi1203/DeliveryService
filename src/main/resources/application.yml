@@ -2,38 +2,16 @@ spring:
   application:
     name: Delivery
 
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/delivery
-    username: delivery
-    password: delivery
+  profiles:
+    group:
+      logging: dev, log
+    active: dev
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    defer-datasource-initialization: true
-
-  jwt:
-    secret: c3ByaW5nLWJvb3QtcHJvamVjdC1kZWxpdmVyeS1zZXJ2aWNlLWp3dC1zZWNyZXQta2V5Cgbg
+  config:
+    import:
+      - classpath:/yaml/application-dev.yml
 
 logging:
   level:
     root: INFO
     com.younggeun.delivery: DEBUG
-
-redis:
-  host: localhost
-  port: 6379
-
-store:
-  photo:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/photo/files
-    baseUrlPath: /files
-  profile:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/profile/files
-    baseUrlPath: /files
-menu:
-  photo:
-    baseLocalPath: /Users/chldu/IdeaProjects/Delivery/store/menu/photo/files
-    baseUrlPath: /files

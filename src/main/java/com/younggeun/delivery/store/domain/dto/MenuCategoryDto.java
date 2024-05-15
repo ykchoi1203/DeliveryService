@@ -17,6 +17,11 @@ public class MenuCategoryDto {
   private String name;
   private int sequence;
 
+  public MenuCategoryDto(MenuCategory menuCategory) {
+    name = menuCategory.getName();
+    sequence = menuCategory.getSequence();
+  }
+
   public MenuCategory toEntity(Store store) {
     return MenuCategory.builder()
         .name(name)

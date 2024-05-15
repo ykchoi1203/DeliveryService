@@ -29,9 +29,10 @@ public class MenuCategory extends BaseEntity {
   @Column(unique = true)
   private String name;
 
+  @Column(nullable = false)
   private int sequence;
 
   @ManyToOne
-  @JoinColumn(name = "store_id")
+  @JoinColumn(name = "store_id", nullable = false)
   private Store store;
 }

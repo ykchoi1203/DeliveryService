@@ -8,6 +8,7 @@ import com.younggeun.delivery.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -42,7 +43,8 @@ public class UserController {
   public ResponseEntity<?> signin(@RequestBody Auth.SignIn request) {
     var user = this.userService.authenticate(request);
     var token = this.tokenProvider.generateToken(user.getEmail(), user.getRole());
-
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authenticate", "Bearer " + token);
     return ResponseEntity.ok(token);
   }
 

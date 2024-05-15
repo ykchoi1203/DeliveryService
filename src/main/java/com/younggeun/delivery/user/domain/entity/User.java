@@ -37,12 +37,14 @@ public class User extends BaseEntity {
   @Column(nullable = false)
   private String password;
 
+  @Column(nullable = false)
   private String username;
 
   @Column(unique = true)
   private String nickname;
 
   @Column(nullable = false)
+  @Enumerated
   private AuthType authType;
 
   private String provider; //어떤 OAuth인지(google, naver 등)
