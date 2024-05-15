@@ -42,12 +42,12 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class PartnerOrderService {
-  private PartnerRepository partnerRepository;
-  private StoreRepository storeRepository;
-  private OrderRepository orderRepository;
-  private MenuRepository menuRepository;
-  private AdditionalMenuRepository additionalMenuRepository;
-  private OrderHistoryRepository orderHistoryRepository;
+  private final PartnerRepository partnerRepository;
+  private final StoreRepository storeRepository;
+  private final OrderRepository orderRepository;
+  private final MenuRepository menuRepository;
+  private final AdditionalMenuRepository additionalMenuRepository;
+  private final OrderHistoryRepository orderHistoryRepository;
   public Page<OrderDto> getPartnerOrderList(
       Authentication authentication, String storeId, Pageable pageable) {
     Partner partner = partnerRepository.findByEmail(authentication.getName()).orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));

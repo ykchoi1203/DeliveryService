@@ -26,6 +26,6 @@ public class Category extends BaseEntity {
   @Column(unique = true)
   private String name;
 
-  @Column(unique = true)
+  @Column(unique = true, columnDefinition = "INT CHECK (sequence > 0)")
   private int sequence;
 }

@@ -53,15 +53,15 @@ public class Store extends BaseEntity {
   @Column(nullable = false)
   private LocalTime endTime;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "INT CHECK (total_stars > 0)")
   private Long totalStars;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "INT CHECK (total_reviews > 0)")
   private Long totalReviews;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "INT CHECK (least_order_cost >= 0)")
   private int leastOrderCost;
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "INT CHECK (delivery_cost >= 0)")
   private int deliveryCost;
   private String originNotation;
 
@@ -74,11 +74,11 @@ public class Store extends BaseEntity {
   private LocalDateTime deletedAt;
 
   @ManyToOne
-  @JoinColumn(name = "partner_id")
+  @JoinColumn(name = "partner_id", nullable = false)
   private Partner partner;
 
   @ManyToOne
-  @JoinColumn(name = "category_id")
+  @JoinColumn(name = "category_id", nullable = false)
   private Category category;
 
 }

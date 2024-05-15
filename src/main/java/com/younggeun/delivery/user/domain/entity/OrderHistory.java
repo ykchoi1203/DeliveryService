@@ -2,6 +2,7 @@ package com.younggeun.delivery.user.domain.entity;
 
 import com.younggeun.delivery.store.domain.entity.AdditionalMenu;
 import com.younggeun.delivery.store.domain.entity.Menu;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,13 +28,14 @@ public class OrderHistory {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long OrderHistoryId;
 
+  @Column(nullable = false, columnDefinition = "INT CHECK (quantity > 0)")
   private int quantity;
 
   @CreatedDate
   private LocalDateTime createdAt;
 
   @ManyToOne
-  @JoinColumn(name = "order_id")
+  @JoinColumn(name = "order_id", nullable = false)
   private OrderTable orderTable;
 
   @ManyToOne

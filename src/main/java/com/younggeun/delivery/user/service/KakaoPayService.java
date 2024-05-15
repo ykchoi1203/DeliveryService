@@ -30,7 +30,8 @@ import org.springframework.web.client.RestTemplate;
 @AllArgsConstructor
 public class KakaoPayService {
 
-  private ShoppingCartService cartService;
+  private final ShoppingCartService cartService;
+  private final KakaoPayConfig kakaoPayConfig;
   static final String cid = "TC0ONETIME";
   public KakaoReadyResponse kakaoPayReady(Authentication authentication) {
     List<CartDto> cartDtoList = cartService.getCart(authentication.getName());
@@ -43,7 +44,7 @@ public class KakaoPayService {
     try {
       RestTemplate restTemplate = new RestTemplate();
       ResponseEntity<KakaoReadyResponse> responseEntity = restTemplate.exchange(
-          KakaoPayConfig.readyUrlDev, HttpMethod.POST, requestEntity, KakaoReadyResponse.class);
+          kakaoPayConfig.getReadyUrlDev(), HttpMethod.POST, requestEntity, KakaoReadyResponse.class);
 
       kakaoRequestDto.setTid(responseEntity.getBody().getTid());
       responseEntity.getBody().setRequestDto(kakaoRequestDto);
@@ -100,7 +101,7 @@ public class KakaoPayService {
     // 외부에 보낼 url
     RestTemplate restTemplate = new RestTemplate();
     ResponseEntity<KakaoApproveResponse> responseEntity = restTemplate.exchange(
-        KakaoPayConfig.approveUrlDev, HttpMethod.POST, requestEntity, KakaoApproveResponse.class);
+        kakaoPayConfig.getApproveUrlDev(), HttpMethod.POST, requestEntity, KakaoApproveResponse.class);
 
     // POST 요청 생성
     restTemplate = new RestTemplate();
@@ -135,7 +136,7 @@ public class KakaoPayService {
     RestTemplate restTemplate = new RestTemplate();
 
     ResponseEntity<KakaoCancelResponse> responseEntity = restTemplate.exchange(
-        KakaoPayConfig.cancelUrlDev, HttpMethod.POST, requestEntity, KakaoCancelResponse.class);
+        kakaoPayConfig.getCancelUrlDev(), HttpMethod.POST, requestEntity, KakaoCancelResponse.class);
 
     return responseEntity.getBody();
   }
@@ -145,7 +146,7 @@ public class KakaoPayService {
    */
   private HttpHeaders getHeaders() {
     HttpHeaders httpHeaders = new HttpHeaders();
-    String auth = "KakaoAK " + KakaoPayConfig.adminKey;
+    String auth = "KakaoAK " + kakaoPayConfig.getAdminKey();
 
     httpHeaders.set("Authorization", auth);
     httpHeaders.set("Content-type",  "application/x-www-form-urlencoded;charset=utf-8");
@@ -155,7 +156,7 @@ public class KakaoPayService {
 
   private HttpHeaders getHeadersToDevKey() {
     HttpHeaders httpHeaders = new HttpHeaders();
-    String auth = "SECRET_KEY " + KakaoPayConfig.devKey;
+    String auth = "SECRET_KEY " + kakaoPayConfig.getDevKey();
 
     httpHeaders.set("Authorization", auth);
     httpHeaders.set("Content-type", "application/json");
