@@ -44,7 +44,6 @@ public class OrderController {
   public ResponseEntity<?> createOrder(Authentication authentication, @RequestBody KakaoApproveResponse kakaoApproveResponse) {
     var result = this.orderService.createOrder(authentication, kakaoApproveResponse);
 
-    // 주문 불가시 장바구니로 이동
     return ResponseEntity.ok(result);
   }
 

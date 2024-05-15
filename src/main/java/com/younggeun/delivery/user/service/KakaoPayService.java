@@ -106,12 +106,11 @@ public class KakaoPayService {
     restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", header);
-    System.out.println(header);
     headers.setContentType(MediaType.APPLICATION_JSON);
     HttpEntity<KakaoApproveResponse> newRequestEntity = new HttpEntity<>(responseEntity.getBody(), headers);
 
     // POST 요청 보내기
-    ResponseEntity<String> newResponseEntity = restTemplate.postForEntity("http://localhost:8080/users/order/success?orderId=" + request, newRequestEntity, String.class);
+    ResponseEntity<String> newResponseEntity = restTemplate.postForEntity("http://localhost:8080/users/order/success", newRequestEntity, String.class);
 
     return newResponseEntity.getBody();
   }
