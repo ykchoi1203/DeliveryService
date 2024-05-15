@@ -32,6 +32,7 @@ public class KakaoPayService {
 
   private final ShoppingCartService cartService;
   private final KakaoPayConfig kakaoPayConfig;
+  private final RestTemplate restTemplate;
   static final String cid = "TC0ONETIME";
   public KakaoReadyResponse kakaoPayReady(Authentication authentication) {
     List<CartDto> cartDtoList = cartService.getCart(authentication.getName());
@@ -42,7 +43,6 @@ public class KakaoPayService {
     HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeadersToDevKey());
 
     try {
-      RestTemplate restTemplate = new RestTemplate();
       ResponseEntity<KakaoReadyResponse> responseEntity = restTemplate.exchange(
           kakaoPayConfig.getReadyUrlDev(), HttpMethod.POST, requestEntity, KakaoReadyResponse.class);
 
@@ -99,12 +99,10 @@ public class KakaoPayService {
     HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeadersToDevKey());
 
     // 외부에 보낼 url
-    RestTemplate restTemplate = new RestTemplate();
     ResponseEntity<KakaoApproveResponse> responseEntity = restTemplate.exchange(
         kakaoPayConfig.getApproveUrlDev(), HttpMethod.POST, requestEntity, KakaoApproveResponse.class);
 
     // POST 요청 생성
-    restTemplate = new RestTemplate();
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", header);
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -133,8 +131,6 @@ public class KakaoPayService {
     HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeadersToDevKey());
 
     // 외부에 보낼 url
-    RestTemplate restTemplate = new RestTemplate();
-
     ResponseEntity<KakaoCancelResponse> responseEntity = restTemplate.exchange(
         kakaoPayConfig.getCancelUrlDev(), HttpMethod.POST, requestEntity, KakaoCancelResponse.class);
 
