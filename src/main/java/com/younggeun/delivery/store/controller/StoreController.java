@@ -3,7 +3,6 @@ package com.younggeun.delivery.store.controller;
 import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.domain.type.OrderType;
 import com.younggeun.delivery.store.service.StoreService;
-import com.younggeun.delivery.user.domain.dto.DeliveryAddressDto;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -112,21 +111,21 @@ public class StoreController {
   @Operation(summary = "user 상점 전체 조회", description = "deliveryAddressDto, Pageable")
   @GetMapping("/users/store")
   @PreAuthorize("hasRole('USER')")
-  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
+  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType) {
     OrderType type = OrderType.valueOf(orderType);
 
-    var result = storeService.selectAllStoreByAddress(authentication,deliveryAddressDto, type);
+    var result = storeService.selectAllStoreByAddress(authentication, type);
     return ResponseEntity.ok(result);
   }
 
   @Operation(summary = "user 상점 카테고리 조회", description = "deliveryAddressDto, Pageable")
   @GetMapping("/users/store/{categoryId}")
   @PreAuthorize("hasRole('USER')")
-  public ResponseEntity<?> selectStoreByCategory(Authentication authentication,@RequestBody DeliveryAddressDto deliveryAddressDto,
+  public ResponseEntity<?> selectStoreByCategory(Authentication authentication,
       @PathVariable String categoryId, @RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType) {
     OrderType type = OrderType.valueOf(orderType);
 
-    var result = storeService.selectStoreByCategory(authentication, Long.valueOf(categoryId), deliveryAddressDto, type);
+    var result = storeService.selectStoreByCategory(authentication, Long.valueOf(categoryId), type);
     return ResponseEntity.ok(result);
   }
 

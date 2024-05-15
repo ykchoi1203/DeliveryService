@@ -8,6 +8,7 @@ import static com.younggeun.delivery.global.exception.type.UserErrorCode.ADDRESS
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_USER_ADDRESS_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
+import com.younggeun.delivery.global.config.KakaoMapConfig;
 import com.younggeun.delivery.global.exception.RestApiException;
 import com.younggeun.delivery.partner.domain.PartnerRepository;
 import com.younggeun.delivery.partner.domain.entity.Partner;
@@ -15,6 +16,7 @@ import com.younggeun.delivery.store.domain.CategoryRepository;
 import com.younggeun.delivery.store.domain.StorePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreProfilePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreRepository;
+import com.younggeun.delivery.store.domain.dto.KakaoMapResponse;
 import com.younggeun.delivery.store.domain.dto.PhotoDto;
 import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.domain.entity.Category;
@@ -24,20 +26,31 @@ import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
 import com.younggeun.delivery.store.domain.type.OrderType;
 import com.younggeun.delivery.user.domain.DeliveryAddressRepository;
 import com.younggeun.delivery.user.domain.UserRepository;
-import com.younggeun.delivery.user.domain.dto.DeliveryAddressDto;
 import com.younggeun.delivery.user.domain.entity.DeliveryAddress;
 import com.younggeun.delivery.user.domain.entity.User;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Service
@@ -50,6 +63,8 @@ public class StoreService {
   private final CategoryRepository categoryRepository;
   private final UserRepository userRepository;
   private final DeliveryAddressRepository deliveryAddressRepository;
+  private final RestTemplate restTemplate;
+  private final KakaoMapConfig kakaoMapConfig;
 
   public Page<StoreDto> selectPartnerStore(Authentication authentication, Pageable pageable) {
     Partner partner = getPartner(authentication);
@@ -61,6 +76,8 @@ public class StoreService {
   public Store createStore(Authentication authentication, StoreDto request) {
     Partner partner = getPartner(authentication);
     Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow(RuntimeException::new);
+
+    extracted(request);
 
     return storeRepository.save(Store.builder()
         .storeName(request.getStoreName())
@@ -81,6 +98,30 @@ public class StoreService {
         .accessStatus(false)
         .category(category)
         .partner(partner).build());
+  }
+
+  private void extracted(StoreDto request) {
+
+    try {
+      HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(this.getHeader());
+
+      UriComponents uriComponents = UriComponentsBuilder.fromUriString(kakaoMapConfig.getMapUrl())
+          .queryParam("analyze_type", "similar")
+          .queryParam("page", "1")
+          .queryParam("size", "10")
+          .queryParam("query", request.getAddress1() + " " + request.getAddress2() + " " + request.getAddress3())
+          .encode(StandardCharsets.UTF_8) // UTF-8로 인코딩
+          .build();
+
+      URI targetUrl = uriComponents.toUri();
+      ResponseEntity<Map> responseEntity = restTemplate.exchange(targetUrl, HttpMethod.GET, requestEntity, Map.class);
+      KakaoMapResponse kakaoMapResponse = new KakaoMapResponse((ArrayList)responseEntity.getBody().get("documents"));
+      request.setLatitude(Double.parseDouble(kakaoMapResponse.getY()));
+      request.setLongitude(Double.parseDouble(kakaoMapResponse.getX()));
+
+    } catch (HttpClientErrorException e) {
+      throw new HttpClientErrorException(e.getStatusCode(), e.getMessage());
+    }
   }
 
   @Transactional
@@ -176,7 +217,7 @@ public class StoreService {
         .orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
   }
 
-  public List<StoreDto> selectAllStoreByAddress(Authentication authentication, DeliveryAddressDto deliveryAddressDto,
+  public List<StoreDto> selectAllStoreByAddress(Authentication authentication,
       OrderType type) {
     User user = getUser(authentication);
     DeliveryAddress deliveryAddress = getDeliveryAddress(user);
@@ -241,7 +282,7 @@ public class StoreService {
     }).toList();
   }
 
-  public List<StoreDto> selectStoreByCategory(Authentication authentication, Long categoryId, DeliveryAddressDto deliveryAddressDto,
+  public List<StoreDto> selectStoreByCategory(Authentication authentication, Long categoryId,
       OrderType oT) {
     User user = getUser(authentication);
     DeliveryAddress deliveryAddress = getDeliveryAddress(user);
@@ -271,5 +312,14 @@ public class StoreService {
 
     return new StoreDto(storeRepository.save(store));
 
+  }
+
+  private HttpHeaders getHeader() {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    String auth = "KakaoAk " + kakaoMapConfig.getAdminKey();
+
+    httpHeaders.set("Authorization", auth);
+
+    return httpHeaders;
   }
 }
