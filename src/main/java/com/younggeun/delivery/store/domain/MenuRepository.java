@@ -17,4 +17,8 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
   List<Menu> findAllMenusWithDetailsByStoreId(@Param("storeId") String storeId);
 
   boolean existsByMenuCategory(MenuCategory category);
+
+  boolean existsByMenuIdIn(List<Long> menuIdList);
+
+  List<Menu> findAllByMenuIdIn(List<Long> menuIdList);
 }

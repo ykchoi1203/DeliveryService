@@ -1,6 +1,9 @@
 package com.younggeun.delivery.user.service;
 
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.DESERIALIZING_CART_EXCEPTION;
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.SERIALIZING_CART_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MENU_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.UserErrorCode.ORDER_MORE_THAN_ONE;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.CART_IS_EMPTY;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.CART_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.DIFFERENT_STORE_IN_CART;
@@ -44,7 +47,7 @@ public class ShoppingCartService {
   }
 
   public List<CartDto> addToCart(String userEmail, CartDto menu) {
-
+    if(menu.getQuantity() < 1) throw new RestApiException(ORDER_MORE_THAN_ONE);
     if (Boolean.FALSE.equals(redisTemplate.hasKey(userEmail))) {
       Cart cart = new Cart();
       cart.setItems(new ArrayList<>());
@@ -152,7 +155,7 @@ public class ShoppingCartService {
     try {
       return new ObjectMapper().writeValueAsString(cart);
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error serializing cart", e);
+      throw new RestApiException(SERIALIZING_CART_EXCEPTION);
     }
   }
 
@@ -160,7 +163,7 @@ public class ShoppingCartService {
     try {
       return new ObjectMapper().readValue(json, Cart.class);
     } catch (JsonProcessingException e) {
-      throw new RuntimeException("Error deserializing cart", e);
+      throw new RestApiException(DESERIALIZING_CART_EXCEPTION);
     }
   }
 }

@@ -40,4 +40,5 @@ public class Menu extends BaseEntity {
   @ManyToOne
   @JoinColumn(name = "category_id")
   private MenuCategory menuCategory;
+
 }

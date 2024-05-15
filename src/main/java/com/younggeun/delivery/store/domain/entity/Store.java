@@ -68,6 +68,9 @@ public class Store extends BaseEntity {
   @Column(nullable = false, columnDefinition = "boolean default false")
   private boolean accessStatus;
 
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private boolean isOpened;
+
   private LocalDateTime deletedAt;
 
   @ManyToOne
