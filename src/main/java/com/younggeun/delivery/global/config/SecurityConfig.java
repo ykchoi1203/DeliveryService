@@ -39,10 +39,10 @@ public class SecurityConfig {
                 antMatcher("/swagger-resources/**")
             ).permitAll()
             .requestMatchers(
-                antMatcher("/**/signin")
+                antMatcher("/**/signin/**")
             ).permitAll()
             .requestMatchers(
-                antMatcher("/**/signup")
+                antMatcher("/**/signup/**")
             ).permitAll()
             .requestMatchers(
                 antMatcher("/users/**")

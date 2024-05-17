@@ -1,10 +1,14 @@
 package com.younggeun.delivery.user.service;
 
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.JSON_PROCESS_ERROR;
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.KAKAO_LOGIN_ERROR;
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.KAKAO_MAP_ERROR;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.ADDRESS_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.EXIST_NICKNAME_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.EXIST_PHONE_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.EXIST_USER_EXCEPTION;
+import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_OAUTH_TYPE;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_PASSWORD_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_USER_ADDRESS_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_USER_EXCEPTION;
@@ -13,6 +17,8 @@ import static com.younggeun.delivery.global.exception.type.UserErrorCode.NO_MORE
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.WISH_NOT_FOUND;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.younggeun.delivery.global.config.KakaoLoginConfig;
 import com.younggeun.delivery.global.config.KakaoMapConfig;
 import com.younggeun.delivery.global.exception.RestApiException;
 import com.younggeun.delivery.global.model.Auth;
@@ -23,10 +29,14 @@ import com.younggeun.delivery.user.domain.DeliveryAddressRepository;
 import com.younggeun.delivery.user.domain.UserRepository;
 import com.younggeun.delivery.user.domain.WishRepository;
 import com.younggeun.delivery.user.domain.dto.DeliveryAddressDto;
+import com.younggeun.delivery.user.domain.dto.Oauth2Response;
+import com.younggeun.delivery.user.domain.dto.TokenResponse;
 import com.younggeun.delivery.user.domain.dto.UserDto;
 import com.younggeun.delivery.user.domain.entity.DeliveryAddress;
 import com.younggeun.delivery.user.domain.entity.User;
 import com.younggeun.delivery.user.domain.entity.Wish;
+import com.younggeun.delivery.user.domain.type.AuthType;
+import com.younggeun.delivery.user.domain.type.Oauth2Type;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -39,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,6 +58,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -63,6 +75,7 @@ public class UserService implements UserDetailsService {
   private final StoreRepository storeRepository;
   private final KakaoMapConfig kakaoMapConfig;
   private final RestTemplate restTemplate;
+  private final KakaoLoginConfig kakaoLoginConfig;
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -261,7 +274,7 @@ public class UserService implements UserDetailsService {
       request.setLongitude(Double.parseDouble(kakaoMapResponse.getX()));
 
     } catch (HttpClientErrorException e) {
-      throw new HttpClientErrorException(e.getStatusCode(), e.getMessage());
+      throw new RestApiException(KAKAO_MAP_ERROR);
     }
   }
 
@@ -270,6 +283,71 @@ public class UserService implements UserDetailsService {
     String auth = "KakaoAK " + kakaoMapConfig.getAdminKey();
 
     httpHeaders.set("Authorization", auth);
+    return httpHeaders;
+  }
+
+  public User ouath2Login(String code) {
+    String accessToken = "";
+    String refreshToken = "";
+
+    try {
+      MultiValueMap<String, String> request = kakaoLoginConfig.setRequestBody(code);
+      HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(request,
+          this.getHeaderForKakaoLoginToken());
+
+      ResponseEntity<TokenResponse> responseEntity = restTemplate.exchange
+          (kakaoLoginConfig.getTokenRequestUri(), HttpMethod.POST, requestEntity, TokenResponse.class);
+
+      accessToken = responseEntity.getBody().getAccess_token();
+
+      System.out.println("accessToken : " + accessToken);
+
+      refreshToken = responseEntity.getBody().getRefresh_token();
+
+      requestEntity = new HttpEntity<>(this.getHeaderForKakaoLogin(accessToken));
+
+      ResponseEntity<String> userInfoResponse = restTemplate.postForEntity(
+          kakaoLoginConfig.getMemberInfoRequestUri(), requestEntity, String.class);
+      Oauth2Response userInfo = new Oauth2Response(userInfoResponse.getBody());
+
+      User user = userRepository.findByProvideIdAndAuthType(userInfo.getSub(), AuthType.OAUTH).orElse(null);
+
+      if(user == null) {
+        user = userRepository.findByEmail(userInfo.getEmail()).orElse(null);
+        if(user != null) {
+          // 로그인 페이지로 이동하여 해당 아이디로 로그인 성공 시 해당 provideId, Local -> OAUTH 업데이트.
+          user.setProvideId(userInfo.getSub());
+          return user;
+        } else {
+          // 해당 이메일로 아이디가 존재하지 않음으로 회원가입 페이지로 이동.
+          // 받아온 userInfo 로 User값을 넘겨줌.
+          return new User(userInfo);
+        }
+
+      } else {
+        if(Oauth2Type.valueOf(user.getProvider()) != Oauth2Type.KAKAO) {
+          throw new RestApiException(MISMATCH_OAUTH_TYPE);
+        }
+        return user;
+      }
+
+    } catch (HttpClientErrorException e) {
+      throw new RestApiException(KAKAO_LOGIN_ERROR);
+    } catch (JsonProcessingException e) {
+      throw new RestApiException(JSON_PROCESS_ERROR);
+    }
+  }
+
+  private HttpHeaders getHeaderForKakaoLoginToken() {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    return httpHeaders;
+  }
+
+  private HttpHeaders getHeaderForKakaoLogin(String accessCode) {
+    HttpHeaders httpHeaders = new HttpHeaders();
+    httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    httpHeaders.set(KakaoLoginConfig.AUTHORIZATION_HEADER, KakaoLoginConfig.TOKEN_TYPE + accessCode);
 
     return httpHeaders;
   }
