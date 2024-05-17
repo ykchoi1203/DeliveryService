@@ -31,12 +31,25 @@ import org.springframework.web.multipart.MultipartFile;
 public class PhotoDto {
   private String url;
   private String photoName;
+  private Long storeId;
   private Store store;
   private Menu menu;
 
   public PhotoDto(MenuPhoto photo) {
     this.url = photo.getUrl();
     this.photoName = photo.getPhotoName();
+  }
+
+  public PhotoDto(StorePhoto storePhoto) {
+    this.url = storePhoto.getUrl();
+    this.photoName = storePhoto.getPhotoName();
+    this.storeId = storePhoto.getStore().getStoreId();
+  }
+
+  public PhotoDto(StoreProfilePhoto profilePhoto) {
+    this.url = profilePhoto.getUrl();
+    this.photoName = profilePhoto.getPhotoName();
+    this.storeId = profilePhoto.getStore().getStoreId();
   }
 
   public void savePhotos(MultipartFile file, String localPath, String urlPath) {

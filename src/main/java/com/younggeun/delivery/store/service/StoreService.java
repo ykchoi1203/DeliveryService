@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -216,37 +217,22 @@ public class StoreService {
   }
 
   private Page<StoreDto> storeToDto(Page<Store> list) {
-    return list.map(store -> {
-      StoreDto storeDto = new StoreDto(store);
+    List<Long> storeIds = list.stream().map(Store::getStoreId).toList();
 
-      StorePhoto storePhoto = storePhotoRepository.findByStore(store)
-          .orElse(null);
+    Map<Long, PhotoDto> storePhotoList = storePhotoRepository.findAllByStoreStoreIdIn(storeIds).stream().map(PhotoDto::new).collect(
+        Collectors.toMap(PhotoDto::getStoreId, photoDto -> photoDto));
+    Map<Long, PhotoDto> storeProfilePhotoList = storeProfilePhotoRepository.findAllByStoreStoreIdIn(storeIds).stream().map(PhotoDto::new).collect(Collectors.toMap(PhotoDto::getStoreId, photoDto -> photoDto));
+    Page<StoreDto> storeDtoPage = list.map(StoreDto::new);
 
-      storeDto.setStorePhoto(storePhoto);
-
-      StoreProfilePhoto storeProfilePhoto = storeProfilePhotoRepository.findByStore(store).orElse(null);
-
-      storeDto.setStoreProfilePhoto(storeProfilePhoto);
-
-      return storeDto;
+    storeDtoPage.forEach(item -> {
+      Long storeId = item.getStoreId();
+      PhotoDto storePhoto = storePhotoList.get(storeId);
+      PhotoDto storeProfilePhoto = storeProfilePhotoList.get(storeId);
+      item.setStorePhoto(storePhoto);
+      item.setStoreProfilePhoto(storeProfilePhoto);
     });
-  }
 
-  private List<StoreDto> storeToDto(List<Store> list) {
-    return list.stream().map(store -> {
-      StoreDto storeDto = new StoreDto(store);
-
-      StorePhoto storePhoto = storePhotoRepository.findByStore(store)
-          .orElse(null);
-
-      storeDto.setStorePhoto(storePhoto);
-
-      StoreProfilePhoto storeProfilePhoto = storeProfilePhotoRepository.findByStore(store).orElse(null);
-
-      storeDto.setStoreProfilePhoto(storeProfilePhoto);
-
-      return storeDto;
-    }).toList();
+    return storeDtoPage;
   }
 
   public StoreDto changeOpened(Authentication authentication, String storeId, boolean isOpened) {

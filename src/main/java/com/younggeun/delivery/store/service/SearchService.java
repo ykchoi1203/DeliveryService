@@ -12,16 +12,16 @@ import com.younggeun.delivery.store.domain.documents.MenuDocument;
 import com.younggeun.delivery.store.domain.documents.StoreDocument;
 import com.younggeun.delivery.store.domain.documents.repository.MenuDocumentRepository;
 import com.younggeun.delivery.store.domain.documents.repository.StoreDocumentRepository;
+import com.younggeun.delivery.store.domain.dto.PhotoDto;
 import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.domain.entity.Store;
-import com.younggeun.delivery.store.domain.entity.StorePhoto;
-import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
 import com.younggeun.delivery.store.domain.type.OrderType;
 import com.younggeun.delivery.user.domain.DeliveryAddressRepository;
 import com.younggeun.delivery.user.domain.UserRepository;
 import com.younggeun.delivery.user.domain.entity.DeliveryAddress;
 import com.younggeun.delivery.user.domain.entity.User;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -123,19 +123,21 @@ public class SearchService {
   }
 
   private List<StoreDto> storeToDto(List<Store> list) {
-    return list.stream().map(store -> {
-      StoreDto storeDto = new StoreDto(store);
+    List<Long> storeIds = list.stream().map(Store::getStoreId).toList();
 
-      StorePhoto storePhoto = storePhotoRepository.findByStore(store)
-          .orElse(null);
+    Map<Long, PhotoDto> storePhotoList = storePhotoRepository.findAllByStoreStoreIdIn(storeIds).stream().map(PhotoDto::new).collect(
+        Collectors.toMap(PhotoDto::getStoreId, photoDto -> photoDto));
+    Map<Long, PhotoDto> storeProfilePhotoList = storeProfilePhotoRepository.findAllByStoreStoreIdIn(storeIds).stream().map(PhotoDto::new).collect(Collectors.toMap(PhotoDto::getStoreId, photoDto -> photoDto));
+    List<StoreDto> storeDtoList = list.stream().map(StoreDto::new).toList();
 
-      storeDto.setStorePhoto(storePhoto);
+    storeDtoList.forEach(item -> {
+      Long storeId = item.getStoreId();
+      PhotoDto storePhoto = storePhotoList.get(storeId);
+      PhotoDto storeProfilePhoto = storeProfilePhotoList.get(storeId);
+      item.setStorePhoto(storePhoto);
+      item.setStoreProfilePhoto(storeProfilePhoto);
+    });
 
-      StoreProfilePhoto storeProfilePhoto = storeProfilePhotoRepository.findByStore(store).orElse(null);
-
-      storeDto.setStoreProfilePhoto(storeProfilePhoto);
-
-      return storeDto;
-    }).toList();
+    return storeDtoList;
   }
 }

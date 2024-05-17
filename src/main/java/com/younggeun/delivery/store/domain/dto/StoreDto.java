@@ -2,8 +2,6 @@ package com.younggeun.delivery.store.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.younggeun.delivery.store.domain.entity.Store;
-import com.younggeun.delivery.store.domain.entity.StorePhoto;
-import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,8 +40,8 @@ public class StoreDto {
   private Long categoryId;
   private boolean isOpened;
 
-  private StorePhoto storePhoto;
-  private StoreProfilePhoto storeProfilePhoto;
+  private PhotoDto storePhoto;
+  private PhotoDto storeProfilePhoto;
 
   public StoreDto(Store store) {
     storeId = store.getStoreId();
