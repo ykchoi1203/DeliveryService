@@ -44,7 +44,7 @@ public class User extends BaseEntity {
   private String nickname;
 
   @Column(nullable = false)
-  @Enumerated
+  @Enumerated(EnumType.STRING)
   private AuthType authType;
 
   private String provider; //어떤 OAuth인지(google, naver 등)

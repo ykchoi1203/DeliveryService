@@ -6,6 +6,7 @@ import com.younggeun.delivery.store.domain.type.OrderStatus;
 import com.younggeun.delivery.user.domain.type.PaymentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,13 +36,13 @@ public class OrderTable extends BaseEntity {
   @Column(nullable = false, columnDefinition = "INT CHECK (total_price > 0)")
   private int totalPrice;
 
-  @Enumerated
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private OrderStatus status;
   private String request;
   private LocalDateTime deliveryTime;
 
-  @Enumerated
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private PaymentType paymentType;
 

@@ -2,6 +2,7 @@ package com.younggeun.delivery.store.domain.entity;
 
 import com.younggeun.delivery.global.entity.BaseEntity;
 import com.younggeun.delivery.partner.domain.entity.Partner;
+import com.younggeun.delivery.store.domain.dto.StoreDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -53,10 +54,10 @@ public class Store extends BaseEntity {
   @Column(nullable = false)
   private LocalTime endTime;
 
-  @Column(nullable = false, columnDefinition = "INT CHECK (total_stars > 0)")
+  @Column(nullable = false, columnDefinition = "INT CHECK (total_stars >= 0)")
   private Long totalStars;
 
-  @Column(nullable = false, columnDefinition = "INT CHECK (total_reviews > 0)")
+  @Column(nullable = false, columnDefinition = "INT CHECK (total_reviews >= 0)")
   private Long totalReviews;
 
   @Column(nullable = false, columnDefinition = "INT CHECK (least_order_cost >= 0)")
@@ -81,4 +82,17 @@ public class Store extends BaseEntity {
   @JoinColumn(name = "category_id", nullable = false)
   private Category category;
 
+  public void update(StoreDto storeDto) {
+    this.storeName = storeDto.getStoreName();
+    this.address1 = storeDto.getAddress1();
+    this.address2 = storeDto.getAddress2();
+    this.address3 = storeDto.getAddress3();
+    this.openTime = storeDto.getOpenTime();
+    this.latitude = storeDto.getLatitude();
+    this.longitude = storeDto.getLongitude();
+    this.endTime = storeDto.getEndTime();
+    this.leastOrderCost = storeDto.getLeastOrderCost();
+    this.deliveryCost = storeDto.getDeliveryCost();
+    this.originNotation = storeDto.getOriginNotation();
+  }
 }

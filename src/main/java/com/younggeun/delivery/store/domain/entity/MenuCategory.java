@@ -26,7 +26,7 @@ public class MenuCategory extends BaseEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long categoryId;
 
-  @Column(unique = true)
+  @Column(nullable = false)
   private String name;
 
   @Column(nullable = false)

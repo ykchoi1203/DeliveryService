@@ -4,6 +4,7 @@ import com.younggeun.delivery.global.entity.BaseEntity;
 import com.younggeun.delivery.global.entity.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,7 +45,7 @@ public class Partner extends BaseEntity {
   private String address;
 
   @Column(nullable = false)
-  @Enumerated
+  @Enumerated(EnumType.STRING)
   private RoleType role;
 
   private LocalDateTime deletedAt;
