@@ -23,6 +23,16 @@ public class UserDto implements UserDetails {
   private String memberName;
   private String nickname;
   private String phoneNumber;
+  private String provideId;
+
+  public UserDto(User user) {
+    this.email = user.getEmail();
+    this.password = user.getPassword();
+    this.memberName = user.getUsername();
+    this.nickname = user.getNickname();
+    this.phoneNumber = user.getPhoneNumber();
+    this.provideId = user.getProvideId();
+  }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
