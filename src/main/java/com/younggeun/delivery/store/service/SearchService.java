@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -46,42 +48,44 @@ public class SearchService {
   private final DeliveryAddressRepository addressRepository;
 
   public List<StoreDto> searchStores(Authentication authentication, OrderType type, String query, String categoryId,
-      boolean asc) {
+      boolean asc, int page) {
     User user = getUser(authentication);
     DeliveryAddress deliveryAddress = getDeliveryAddress(user);
     Set<Long> storeIds;
-    // 쿼리와 카테고리가 조건으로 안들어온 경우
+    Pageable pageable;
+    // 쿼리와 카테고리가 조건으로 안들어온 경우 20개 검색
     if(query.isEmpty() && Long.parseLong(categoryId) == 0) {
+      pageable = PageRequest.of(page, 20);
       storeIds = storeDocumentRepository.findByAddress1AndAddress2(deliveryAddress.getAddress1(),
-          deliveryAddress.getAddress2()).stream().map(StoreDocument::getId).collect(Collectors.toSet());
+          deliveryAddress.getAddress2(), pageable).stream().map(StoreDocument::getId).collect(Collectors.toSet());
 
       return getStoreDtos(type, deliveryAddress, storeIds.stream().toList(), asc);
     }
-
+    pageable = PageRequest.of(page, 10);
     // 가게명으로 먼저 검색
     if(Long.parseLong(categoryId) == 0) {
       storeIds = storeDocumentRepository.findByAddress1AndAddress2AndNameContaining(
-              deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), query)
+              deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), query, pageable)
           .stream().map(StoreDocument::getId).collect(Collectors.toSet());
     } else {
       storeIds = storeDocumentRepository.findByCategoryIdAndAddress1AndAddress2AndNameContaining(Long.parseLong(categoryId),
-              deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), query)
+              deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), query, pageable)
           .stream().map(StoreDocument::getId).collect(Collectors.toSet());
     }
 
     // 메뉴명으로 검색
-    List<Long> storeIdByMenu = menuDocumentRepository.findByNameContaining(query).stream().map(MenuDocument::getStoreId).distinct().toList();
+    List<Long> storeIdByMenu = menuDocumentRepository.findByNameContaining(query, pageable).stream().map(MenuDocument::getStoreId).distinct().toList();
 
     if(Long.parseLong(categoryId) == 0) {
-      storeIds.addAll(storeDocumentRepository.findByAddress1AndAddress2AndIdIn(deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), storeIdByMenu)
+      storeIds.addAll(storeDocumentRepository.findByAddress1AndAddress2AndIdIn(deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), storeIdByMenu, pageable)
           .stream().map(StoreDocument::getId).collect(Collectors.toSet()));
     } else {
-      storeIds.addAll(storeDocumentRepository.findByCategoryIdAndAddress1AndAddress2AndIdIn(Long.parseLong(categoryId), deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), storeIdByMenu)
+      storeIds.addAll(storeDocumentRepository.findByCategoryIdAndAddress1AndAddress2AndIdIn(Long.parseLong(categoryId), deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), storeIdByMenu, pageable)
           .stream().map(StoreDocument::getId).collect(Collectors.toSet()));
     }
 
     // 쿼리가 포함된 가게명의 ID set 에 쿼리에 포함된 메뉴가 있는 가게 list id 를 합친 후 list 를 Repository 에서 가져온다.
-    storeIds.addAll(storeDocumentRepository.findByAddress1AndAddress2AndIdIn(deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), storeIdByMenu).stream().map(StoreDocument::getId).collect(
+    storeIds.addAll(storeDocumentRepository.findByAddress1AndAddress2AndIdIn(deliveryAddress.getAddress1(), deliveryAddress.getAddress2(), storeIdByMenu, pageable).stream().map(StoreDocument::getId).collect(
         Collectors.toSet()));
 
     return getStoreDtos(type, deliveryAddress, storeIds.stream().toList(), asc);
