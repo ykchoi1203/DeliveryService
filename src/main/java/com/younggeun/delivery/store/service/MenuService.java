@@ -18,6 +18,8 @@ import com.younggeun.delivery.store.domain.MenuCategoryRepository;
 import com.younggeun.delivery.store.domain.MenuPhotoRepository;
 import com.younggeun.delivery.store.domain.MenuRepository;
 import com.younggeun.delivery.store.domain.StoreRepository;
+import com.younggeun.delivery.store.domain.documents.MenuDocument;
+import com.younggeun.delivery.store.domain.documents.repository.MenuDocumentRepository;
 import com.younggeun.delivery.store.domain.dto.AdditionalMenuDto;
 import com.younggeun.delivery.store.domain.dto.MenuCategoryDto;
 import com.younggeun.delivery.store.domain.dto.MenuDto;
@@ -52,6 +54,7 @@ public class MenuService {
   private final MenuCategoryRepository menuCategoryRepository;
   private final MenuPhotoRepository menuPhotoRepository;
   private final AdditionalMenuRepository additionalMenuRepository;
+  private final MenuDocumentRepository menuDocumentRepository;
 
   public List<MenuListDto> selectMenu(Authentication authentication, String storeId, RoleType type) {
     Store store = type == RoleType.ROLE_PARTNER ? getStoreWithMatchUser(authentication, storeId) : getStore(storeId);
@@ -98,7 +101,8 @@ public class MenuService {
     return menuCategoryRepository.save(menuCategoryDto.toEntity(store));
   }
 
-  public Menu createStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
+  @Transactional
+  public MenuDto createStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
 
     getStoreWithMatchUser(authentication, storeId);
     MenuCategory menuCategory = menuCategoryRepository.findById(menuDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
@@ -107,23 +111,34 @@ public class MenuService {
       throw new RestApiException(MISMATCH_STORE_CATEGORY);
     }
 
-    return menuRepository.save(menuDto.toEntity(menuCategory));
+    Menu menu = menuRepository.save(menuDto.toEntity(menuCategory));
+    menuDocumentRepository.save(new MenuDocument(menu, Long.parseLong(storeId)));
+
+    return new MenuDto(menu);
   }
 
-  public Menu updateStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
+  @Transactional
+  public MenuDto updateStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
     getStoreWithMatchUser(authentication, storeId);
     Menu menu = menuRepository.findById(menuDto.getMenuId()).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
     MenuCategory menuCategory = menuCategoryRepository.findById(menuDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
-    return menuRepository.save(menuDto.toEntity(menu.getMenuId(), menuCategory));
+
+    menu = menuRepository.save(menuDto.toEntity(menu.getMenuId(), menuCategory));
+    menuDocumentRepository.save(new MenuDocument(menu, Long.parseLong(storeId)));
+
+    return new MenuDto(menu);
   }
 
+  @Transactional
   public boolean deleteStoreMenu(Authentication authentication, String storeId, long menuId) {
     getStoreWithMatchUser(authentication, storeId);
+    Menu menu = menuRepository.findById(menuId).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
 
-    menuRepository.findById(menuId).ifPresent(item -> {
-      item.setDeletedAt(LocalDateTime.now());
-      menuRepository.save(item);
-    });
+    menu.setDeletedAt(LocalDateTime.now());
+
+    menuRepository.save(menu);
+
+    menuDocumentRepository.deleteById(menuId);
 
     return true;
   }

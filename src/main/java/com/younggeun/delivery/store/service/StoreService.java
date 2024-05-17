@@ -4,8 +4,6 @@ import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXIST_
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_PARTNER_STORE;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_CATEGORY_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
-import static com.younggeun.delivery.global.exception.type.UserErrorCode.ADDRESS_NOT_FOUND;
-import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_USER_ADDRESS_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
 import com.younggeun.delivery.global.config.KakaoMapConfig;
@@ -16,6 +14,8 @@ import com.younggeun.delivery.store.domain.CategoryRepository;
 import com.younggeun.delivery.store.domain.StorePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreProfilePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreRepository;
+import com.younggeun.delivery.store.domain.documents.StoreDocument;
+import com.younggeun.delivery.store.domain.documents.repository.StoreDocumentRepository;
 import com.younggeun.delivery.store.domain.dto.KakaoMapResponse;
 import com.younggeun.delivery.store.domain.dto.PhotoDto;
 import com.younggeun.delivery.store.domain.dto.StoreDto;
@@ -23,11 +23,6 @@ import com.younggeun.delivery.store.domain.entity.Category;
 import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.store.domain.entity.StorePhoto;
 import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
-import com.younggeun.delivery.store.domain.type.OrderType;
-import com.younggeun.delivery.user.domain.DeliveryAddressRepository;
-import com.younggeun.delivery.user.domain.UserRepository;
-import com.younggeun.delivery.user.domain.entity.DeliveryAddress;
-import com.younggeun.delivery.user.domain.entity.User;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -61,10 +56,9 @@ public class StoreService {
   private final StoreProfilePhotoRepository storeProfilePhotoRepository;
   private final PartnerRepository partnerRepository;
   private final CategoryRepository categoryRepository;
-  private final UserRepository userRepository;
-  private final DeliveryAddressRepository deliveryAddressRepository;
   private final RestTemplate restTemplate;
   private final KakaoMapConfig kakaoMapConfig;
+  private final StoreDocumentRepository storeDocumentRepository;
 
   public Page<StoreDto> selectPartnerStore(Authentication authentication, Pageable pageable) {
     Partner partner = getPartner(authentication);
@@ -78,8 +72,7 @@ public class StoreService {
     Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow(RuntimeException::new);
 
     extracted(request);
-
-    return storeRepository.save(Store.builder()
+    Store store = storeRepository.save(Store.builder()
         .storeName(request.getStoreName())
         .phone(request.getPhone())
         .address1(request.getAddress1())
@@ -95,9 +88,14 @@ public class StoreService {
         .leastOrderCost(request.getLeastOrderCost())
         .deliveryCost(request.getDeliveryCost())
         .originNotation(request.getOriginNotation())
-        .accessStatus(false)
+        .accessStatus(true) // 추후 admin 에서 허가를 하는 기능을 만든다면 false로 바꿀 예정.
         .category(category)
         .partner(partner).build());
+
+    // 추후 admin 에서 허가를 하는 기능을 만든다면 그 메서드에서 저장할 예정.
+    storeDocumentRepository.save(new StoreDocument(store));
+
+    return store;
   }
 
   private void extracted(StoreDto request) {
@@ -217,37 +215,6 @@ public class StoreService {
         .orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
   }
 
-  public List<StoreDto> selectAllStoreByAddress(Authentication authentication,
-      OrderType type) {
-    User user = getUser(authentication);
-    DeliveryAddress deliveryAddress = getDeliveryAddress(user);
-
-    if(type == OrderType.STAR) {
-      return storeToDto(storeRepository.findAllByAddress2OrderByStar(deliveryAddress.getAddress2()));
-    } else if(type == OrderType.DIST) {
-      return storeToDto(storeRepository.findAllByAddress2OrderByDist(deliveryAddress.getAddress2(), deliveryAddress.getLatitude(), deliveryAddress.getLongitude()));
-    } else if(type == OrderType.COST) {
-      return storeToDto(storeRepository.findAllByAddress2OrderByDeliveryCost(deliveryAddress.getAddress2()));
-    } else {
-      return storeToDto(storeRepository.findAllByAddress2OrderByDeliveryCost(deliveryAddress.getAddress2()));
-    }
-  }
-
-  private User getUser(Authentication authentication) {
-    return userRepository.findByEmail(authentication.getName())
-        .orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
-  }
-
-  private DeliveryAddress getDeliveryAddress(User user) {
-    DeliveryAddress deliveryAddress = deliveryAddressRepository.findByUserAndDefaultAddressStatusIsTrue(user).orElseThrow(() -> new RestApiException(ADDRESS_NOT_FOUND));
-
-    if(!Objects.equals(user.getUserId(), deliveryAddress.getUser().getUserId())) {
-      throw new RestApiException(MISMATCH_USER_ADDRESS_EXCEPTION);
-    }
-
-    return deliveryAddress;
-  }
-
   private Page<StoreDto> storeToDto(Page<Store> list) {
     return list.map(store -> {
       StoreDto storeDto = new StoreDto(store);
@@ -282,25 +249,7 @@ public class StoreService {
     }).toList();
   }
 
-  public List<StoreDto> selectStoreByCategory(Authentication authentication, Long categoryId,
-      OrderType oT) {
-    User user = getUser(authentication);
-    DeliveryAddress deliveryAddress = getDeliveryAddress(user);
-    Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
-
-    if(oT == OrderType.STAR) {
-      return storeToDto(storeRepository.findAllByCategoryOrderByStar(deliveryAddress.getAddress2(), category.getCategoryId()));
-    } else if(oT == OrderType.DIST) {
-      return storeToDto(storeRepository.findAllByCategoryOrderByDist(deliveryAddress.getAddress2(), category.getCategoryId(), deliveryAddress.getLatitude(), deliveryAddress.getLongitude()));
-    } else if(oT == OrderType.COST) {
-      return storeToDto(storeRepository.findAllByAddress2AndCategoryOrderByDeliveryCost(deliveryAddress.getAddress2(), category));
-    } else {
-      return storeToDto(storeRepository.findAllByAddress2AndCategory(deliveryAddress.getAddress2(), category));
-    }
-  }
-
-
-  public Object changeOpened(Authentication authentication, String storeId, boolean isOpened) {
+  public StoreDto changeOpened(Authentication authentication, String storeId, boolean isOpened) {
     Partner partner = getPartner(authentication);
     Store store = storeRepository.findById(Long.valueOf(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
 
@@ -316,10 +265,50 @@ public class StoreService {
 
   private HttpHeaders getHeader() {
     HttpHeaders httpHeaders = new HttpHeaders();
-    String auth = "KakaoAk " + kakaoMapConfig.getAdminKey();
+    String auth = "KakaoAK " + kakaoMapConfig.getAdminKey();
 
     httpHeaders.set("Authorization", auth);
 
     return httpHeaders;
   }
+
+  @Transactional
+  public boolean deleteStore(Authentication authentication, String storeId) {
+    Partner partner = getPartner(authentication);
+    Store store = storeRepository.findById(Long.valueOf(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
+
+    if(partner.getPartnerId() != store.getPartner().getPartnerId()) {
+      throw new RestApiException(MISMATCH_PARTNER_STORE);
+    }
+    store.setDeletedAt(LocalDateTime.now());
+
+    storeRepository.save(store);
+    storeDocumentRepository.deleteById(Long.parseLong(storeId));
+
+    return true;
+  }
+
+  @Transactional
+  public StoreDto updateStore(Authentication authentication, String storeId, StoreDto storeDto) {
+    Partner partner = getPartner(authentication);
+    Store store = storeRepository.findById(Long.valueOf(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
+
+    if(partner.getPartnerId() != store.getPartner().getPartnerId()) {
+      throw new RestApiException(MISMATCH_PARTNER_STORE);
+    }
+
+    if(storeDto.getCategoryId() != store.getCategory().getCategoryId()) {
+      store.setCategory(categoryRepository.findById(storeDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND)));
+    }
+
+    extracted(storeDto);
+    store.update(storeDto);
+
+    store = storeRepository.save(store);
+
+    storeDocumentRepository.save(new StoreDocument(store));
+
+    return new StoreDto(store);
+  }
+
 }
