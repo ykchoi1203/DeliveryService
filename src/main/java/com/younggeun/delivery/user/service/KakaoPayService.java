@@ -1,5 +1,6 @@
 package com.younggeun.delivery.user.service;
 
+import static com.younggeun.delivery.global.exception.type.PayErrorCode.KAKAO_PAY_ERROR;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.CART_IS_EMPTY;
 
 import com.younggeun.delivery.global.config.KakaoPayConfig;
@@ -50,7 +51,7 @@ public class KakaoPayService {
       responseEntity.getBody().setRequestDto(kakaoRequestDto);
       return responseEntity.getBody();
     } catch (HttpClientErrorException e) {
-      throw new HttpClientErrorException(e.getStatusCode(), e.getMessage());
+      throw new RestApiException(KAKAO_PAY_ERROR);
     }
   }
 
@@ -87,31 +88,39 @@ public class KakaoPayService {
    */
   public String approveResponse(KakaoRequestDto request, Authentication authentication,
       String header) {
-    // 카카오 요청
-    Map<String, String> parameters = new HashMap<>();
-    parameters.put("cid", cid);
-    parameters.put("tid", request.getTid());
-    parameters.put("partner_order_id", request.getPartnerOrderId());
-    parameters.put("partner_user_id", request.getPartnerUserId());
-    parameters.put("pg_token", request.getPgToken());
+    try {
+      // 카카오 요청
+      Map<String, String> parameters = new HashMap<>();
+      parameters.put("cid", cid);
+      parameters.put("tid", request.getTid());
+      parameters.put("partner_order_id", request.getPartnerOrderId());
+      parameters.put("partner_user_id", request.getPartnerUserId());
+      parameters.put("pg_token", request.getPgToken());
 
-    // 파라미터, 헤더
-    HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, this.getHeadersToDevKey());
+      // 파라미터, 헤더
+      HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters,
+          this.getHeadersToDevKey());
 
-    // 외부에 보낼 url
-    ResponseEntity<KakaoApproveResponse> responseEntity = restTemplate.exchange(
-        kakaoPayConfig.getApproveUrlDev(), HttpMethod.POST, requestEntity, KakaoApproveResponse.class);
+      // 외부에 보낼 url
+      ResponseEntity<KakaoApproveResponse> responseEntity = restTemplate.exchange(
+          kakaoPayConfig.getApproveUrlDev(), HttpMethod.POST, requestEntity,
+          KakaoApproveResponse.class);
 
-    // POST 요청 생성
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", header);
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    HttpEntity<KakaoApproveResponse> newRequestEntity = new HttpEntity<>(responseEntity.getBody(), headers);
+      // POST 요청 생성
+      HttpHeaders headers = new HttpHeaders();
+      headers.set("Authorization", header);
+      headers.setContentType(MediaType.APPLICATION_JSON);
+      HttpEntity<KakaoApproveResponse> newRequestEntity = new HttpEntity<>(responseEntity.getBody(),
+          headers);
 
-    // POST 요청 보내기
-    ResponseEntity<String> newResponseEntity = restTemplate.postForEntity("http://localhost:8080/users/order/success", newRequestEntity, String.class);
+      // POST 요청 보내기
+      ResponseEntity<String> newResponseEntity = restTemplate.postForEntity(
+          "http://localhost:8080/users/order/success", newRequestEntity, String.class);
 
-    return newResponseEntity.getBody();
+      return newResponseEntity.getBody();
+    } catch (HttpClientErrorException e) {
+      throw new RestApiException(KAKAO_PAY_ERROR);
+    }
   }
 
   /**

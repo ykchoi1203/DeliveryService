@@ -1,5 +1,6 @@
 package com.younggeun.delivery.store.service;
 
+import static com.younggeun.delivery.global.exception.type.CommonErrorCode.KAKAO_MAP_ERROR;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXIST_PHOTO_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_PARTNER_STORE;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_CATEGORY_NOT_FOUND;
@@ -119,7 +120,7 @@ public class StoreService {
       request.setLongitude(Double.parseDouble(kakaoMapResponse.getX()));
 
     } catch (HttpClientErrorException e) {
-      throw new HttpClientErrorException(e.getStatusCode(), e.getMessage());
+      throw new RestApiException(KAKAO_MAP_ERROR);
     }
   }
 
