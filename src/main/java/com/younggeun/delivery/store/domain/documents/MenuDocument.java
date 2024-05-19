@@ -7,12 +7,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Mapping;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "menu")
+@Setting(settingPath = "elasticsearch/setting.json")
+@Mapping(mappingPath = "elasticsearch/mapping.json")
 public class MenuDocument {
   @Id
   private Long id;

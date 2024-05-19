@@ -15,7 +15,9 @@ import com.younggeun.delivery.store.domain.CategoryRepository;
 import com.younggeun.delivery.store.domain.StorePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreProfilePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreRepository;
+import com.younggeun.delivery.store.domain.documents.MenuDocument;
 import com.younggeun.delivery.store.domain.documents.StoreDocument;
+import com.younggeun.delivery.store.domain.documents.repository.MenuDocumentRepository;
 import com.younggeun.delivery.store.domain.documents.repository.StoreDocumentRepository;
 import com.younggeun.delivery.store.domain.dto.KakaoMapResponse;
 import com.younggeun.delivery.store.domain.dto.PhotoDto;
@@ -36,6 +38,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -61,6 +64,8 @@ public class StoreService {
   private final RestTemplate restTemplate;
   private final KakaoMapConfig kakaoMapConfig;
   private final StoreDocumentRepository storeDocumentRepository;
+  private final ElasticsearchRestTemplate elasticsearchOperations;
+  private final MenuDocumentRepository menuDocumentRepository;
 
   public Page<StoreDto> selectPartnerStore(Authentication authentication, Pageable pageable) {
     Partner partner = getPartner(authentication);
@@ -93,9 +98,12 @@ public class StoreService {
         .accessStatus(true) // 추후 admin 에서 허가를 하는 기능을 만든다면 false로 바꿀 예정.
         .category(category)
         .partner(partner).build());
-
+    System.out.println(store);
     // 추후 admin 에서 허가를 하는 기능을 만든다면 그 메서드에서 저장할 예정.
-    storeDocumentRepository.save(new StoreDocument(store));
+    StoreDocument storeDocument = new StoreDocument(store);
+    System.out.println(storeDocument);
+
+    elasticsearchOperations.save(new StoreDocument(store));
 
     return store;
   }
@@ -270,7 +278,9 @@ public class StoreService {
     store.setDeletedAt(LocalDateTime.now());
 
     storeRepository.save(store);
-    storeDocumentRepository.deleteById(Long.parseLong(storeId));
+    StoreDocument storeDocument = storeDocumentRepository.findById(store.getStoreId()).orElseThrow(()-> new RestApiException(STORE_NOT_FOUND));
+
+    elasticsearchOperations.delete(storeDocument);
 
     return true;
   }
@@ -293,7 +303,8 @@ public class StoreService {
 
     store = storeRepository.save(store);
 
-    storeDocumentRepository.save(new StoreDocument(store));
+    List<MenuDocument> menuList = menuDocumentRepository.findByStoreId(store.getStoreId());
+    elasticsearchOperations.save(new StoreDocument(store, menuList));
 
     return new StoreDto(store);
   }

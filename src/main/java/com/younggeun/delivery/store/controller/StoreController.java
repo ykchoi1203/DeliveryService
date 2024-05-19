@@ -133,11 +133,12 @@ public class StoreController {
       @RequestParam(name = "category", required = false, defaultValue = "0") String categoryId,
       @RequestParam(name = "query", required = false, defaultValue = "") String query,
       @RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType,
-      @RequestParam(name = "asc", required = false, defaultValue = "true") String asc,
+      @RequestParam(name = "order", required = false, defaultValue = "ASC") String asc,
+      @RequestParam(name = "distance", required = false, defaultValue = "5000") String distance,
       @RequestParam(name = "page", required = false, defaultValue = "0") String page) {
     OrderType type = OrderType.valueOf(orderType);
 
-    var result = searchService.searchStores(authentication, type, query, categoryId, Boolean.parseBoolean(asc), Integer.parseInt(page));
+    var result = searchService.findStores(authentication, type, distance,  Long.parseLong(categoryId), query, asc);
     return ResponseEntity.ok(result);
   }
 

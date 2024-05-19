@@ -27,8 +27,23 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.unit.DistanceUnit;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.GeoDistanceSortBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +61,9 @@ public class SearchService {
 
   private final UserRepository userRepository;
   private final DeliveryAddressRepository addressRepository;
+
+  private final ElasticsearchRestTemplate elasticsearchRestTemplate;
+
 
   public List<StoreDto> searchStores(Authentication authentication, OrderType type, String query, String categoryId,
       boolean asc, int page) {
@@ -89,6 +107,79 @@ public class SearchService {
         Collectors.toSet()));
 
     return getStoreDtos(type, deliveryAddress, storeIds.stream().toList(), asc);
+  }
+
+  public List<StoreDocument> findStores(Authentication authentication, OrderType type, String distance, Long categoryId, String query, String asc) {
+    User user = getUser(authentication);
+    DeliveryAddress deliveryAddress = getDeliveryAddress(user);
+    Sort.Direction direction = asc.equals("ASC") ? Direction.ASC : Direction.DESC;
+    System.out.println(direction.toString());
+
+    NativeSearchQuery searchQuery = buildSearchQuery(deliveryAddress, distance, categoryId, query, type, direction);
+    // SearchSourceBuilder 사용하여 쿼리 내용을 JSON 형식으로 출력
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    searchSourceBuilder.query(searchQuery.getQuery());
+    searchQuery.getElasticsearchSorts().forEach(searchSourceBuilder::sort);
+
+    // 쿼리 내용을 출력
+    String queryContent = searchSourceBuilder.toString();
+    System.out.println(queryContent);
+
+    SearchHits<StoreDocument> searchHits = elasticsearchRestTemplate.search(searchQuery, StoreDocument.class);
+    return searchHits.stream().map(SearchHit::getContent).collect(Collectors.toList());
+  }
+
+  private NativeSearchQuery buildSearchQuery(DeliveryAddress deliveryAddress, String distance, Long categoryId, String query, OrderType type,
+      Direction direction) {
+    BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+        .must(QueryBuilders.geoDistanceQuery("location")
+            .point(deliveryAddress.getLatitude(), deliveryAddress.getLongitude())
+            .distance(distance));
+
+    if (categoryId != 0) {
+      queryBuilder.must(QueryBuilders.termQuery("categoryId", categoryId));
+    }
+
+    if (!query.isEmpty()) {
+      BoolQueryBuilder nameOrMenuQuery = QueryBuilders.boolQuery()
+          .should(QueryBuilders.matchQuery("name", query))
+          .should(QueryBuilders.nestedQuery("menuDocumentList",
+              QueryBuilders.matchQuery("menuDocumentList.name", query), ScoreMode.Max));
+
+      queryBuilder.must(nameOrMenuQuery);
+    }
+
+    SortOrder sortOrder = direction == Direction.ASC ? SortOrder.ASC : SortOrder.DESC;
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+    searchSourceBuilder.query(queryBuilder);
+
+    switch (type) {
+      case COST:
+        searchSourceBuilder.sort("deliveryCost", sortOrder);
+        break;
+      case DIST:
+        GeoPoint geoPoint = new GeoPoint(deliveryAddress.getLatitude(), deliveryAddress.getLongitude());
+        GeoDistanceSortBuilder geoDistanceSortBuilder = new GeoDistanceSortBuilder("location", geoPoint)
+            .unit(DistanceUnit.METERS)
+            .order(sortOrder);
+        searchSourceBuilder.sort(geoDistanceSortBuilder);
+        break;
+      case STAR:
+        searchSourceBuilder.sort("stars", sortOrder);
+        break;
+      default:
+        searchSourceBuilder.sort("_score", sortOrder);
+        break;
+    }
+
+    // 쿼리 내용 출력
+    System.out.println(queryBuilder.toString());
+
+    return new NativeSearchQueryBuilder()
+        .withQuery(queryBuilder)
+        .withMinScore(1.0f)
+        .withSorts(searchSourceBuilder.sorts())
+        .build();
   }
 
   private List<StoreDto> getStoreDtos(OrderType type, DeliveryAddress deliveryAddress,
