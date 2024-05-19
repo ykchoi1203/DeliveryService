@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +52,14 @@ public class OrderController {
   @GetMapping("/{orderId}")
   public ResponseEntity<?> getOrder(Authentication authentication, @PathVariable String orderId) {
     var result = orderService.getUserOrder(authentication, orderId);
+
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "user가 배달을 받아서 상태를 바꾸고 싶을 때", description = "authentication, orderId")
+  @PutMapping("/{orderId}/delivery")
+  public ResponseEntity<?> getDelivery(Authentication authentication, @PathVariable String orderId) {
+    var result = orderService.getDelivery(authentication, orderId);
 
     return ResponseEntity.ok(result);
   }
