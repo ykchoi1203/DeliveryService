@@ -4,11 +4,14 @@ import com.younggeun.delivery.admin.service.AdminService;
 import com.younggeun.delivery.global.model.Auth;
 import com.younggeun.delivery.global.security.TokenProvider;
 import com.younggeun.delivery.store.domain.dto.CategoryDto;
+import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.domain.entity.Category;
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,5 +66,35 @@ public class AdminController {
     var result = adminService.deleteCategory(Long.parseLong(categoryId));
 
     return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "admin get store List", description = "")
+  @GetMapping("store")
+  public ResponseEntity<?> getStoreList(Pageable pageable) {
+    Page<StoreDto> storeList = adminService.getStoreList(pageable);
+
+    return ResponseEntity.ok(storeList);
+  }
+
+  @Operation(summary = "admin get store detail", description = "")
+  @GetMapping("store/{storeId}")
+  public ResponseEntity<?> getStoreDetail(@PathVariable String storeId) {
+    var store = adminService.getStore(storeId);
+
+    return ResponseEntity.ok(store);
+  }
+
+  @PutMapping("store/{storeId}/access")
+  public ResponseEntity<?> accessStore(@PathVariable String storeId) {
+    var store = adminService.changeStoreStatus(storeId, true);
+
+    return ResponseEntity.ok(store);
+  }
+
+  @PutMapping("store/{storeId}/cancel")
+  public ResponseEntity<?> accessCancelStore(@PathVariable String storeId) {
+    var store = adminService.changeStoreStatus(storeId, false);
+
+    return ResponseEntity.ok(store);
   }
 }

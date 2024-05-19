@@ -56,6 +56,10 @@ public class Store extends BaseEntity {
   @Column(nullable = false)
   private LocalTime endTime;
 
+  private LocalDateTime lastOpenTime;
+
+  private LocalDateTime lastCloseTime;
+
   @Column(nullable = false, columnDefinition = "INT CHECK (total_stars >= 0)")
   private Long totalStars;
 
@@ -96,5 +100,8 @@ public class Store extends BaseEntity {
     this.leastOrderCost = storeDto.getLeastOrderCost();
     this.deliveryCost = storeDto.getDeliveryCost();
     this.originNotation = storeDto.getOriginNotation();
+    this.lastOpenTime = storeDto.getLastOpenTime();
+    this.lastCloseTime = storeDto.getLastCloseTime();
+
   }
 }

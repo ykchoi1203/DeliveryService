@@ -8,6 +8,7 @@ import com.younggeun.delivery.store.domain.entity.MenuPhoto;
 import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.store.domain.entity.StorePhoto;
 import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
+import com.younggeun.delivery.user.domain.entity.ReviewPhoto;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,24 +33,41 @@ public class PhotoDto {
   private String url;
   private String photoName;
   private Long storeId;
+  private Long reviewId;
   private Store store;
   private Menu menu;
+  private Long menuId;
 
-  public PhotoDto(MenuPhoto photo) {
-    this.url = photo.getUrl();
-    this.photoName = photo.getPhotoName();
+  public PhotoDto(MenuPhoto menuPhoto) {
+    if(menuPhoto != null) {
+      this.url = menuPhoto.getUrl();
+      this.photoName = menuPhoto.getPhotoName();
+      this.menuId = menuPhoto.getMenu().getMenuId();
+    }
   }
 
   public PhotoDto(StorePhoto storePhoto) {
-    this.url = storePhoto.getUrl();
-    this.photoName = storePhoto.getPhotoName();
-    this.storeId = storePhoto.getStore().getStoreId();
+    if(storePhoto != null) {
+      this.url = storePhoto.getUrl();
+      this.photoName = storePhoto.getPhotoName();
+      this.storeId = storePhoto.getStore().getStoreId();
+    }
   }
 
   public PhotoDto(StoreProfilePhoto profilePhoto) {
-    this.url = profilePhoto.getUrl();
-    this.photoName = profilePhoto.getPhotoName();
-    this.storeId = profilePhoto.getStore().getStoreId();
+    if(profilePhoto != null) {
+      this.url = profilePhoto.getUrl();
+      this.photoName = profilePhoto.getPhotoName();
+      this.storeId = profilePhoto.getStore().getStoreId();
+    }
+  }
+
+  public PhotoDto(ReviewPhoto reviewPhoto) {
+    if(reviewPhoto != null) {
+      this.url = reviewPhoto.getUrl();
+      this.photoName = reviewPhoto.getPhotoName();
+      this.reviewId = reviewPhoto.getReview().getReviewId();
+    }
   }
 
   public void savePhotos(MultipartFile file, String localPath, String urlPath) {

@@ -5,19 +5,30 @@ import static com.younggeun.delivery.global.exception.type.CommonErrorCode.CATEG
 import static com.younggeun.delivery.global.exception.type.CommonErrorCode.EXIST_CATEGORY_NAME;
 import static com.younggeun.delivery.global.exception.type.CommonErrorCode.NOT_ALLOW_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXISTS_SEQUENCE_EXCEPTION;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_ACCESS_STATUS_IS_SAME;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_DOCUMENT_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.MISMATCH_PASSWORD_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
 import com.younggeun.delivery.global.exception.RestApiException;
 import com.younggeun.delivery.global.model.Auth;
 import com.younggeun.delivery.store.domain.CategoryRepository;
+import com.younggeun.delivery.store.domain.StoreRepository;
+import com.younggeun.delivery.store.domain.documents.StoreDocument;
+import com.younggeun.delivery.store.domain.documents.repository.StoreDocumentRepository;
 import com.younggeun.delivery.store.domain.dto.CategoryDto;
+import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.domain.entity.Category;
+import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.user.domain.UserRepository;
 import com.younggeun.delivery.user.domain.entity.User;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,6 +43,9 @@ public class AdminService implements UserDetailsService {
   private final PasswordEncoder passwordEncoder;
   private final UserRepository userRepository;
   private final CategoryRepository categoryRepository;
+  private final StoreRepository storeRepository;
+  private final ElasticsearchRestTemplate elasticsearchRestTemplate;
+  private final StoreDocumentRepository storeDocumentRepository;
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -92,5 +106,35 @@ public class AdminService implements UserDetailsService {
   public boolean deleteCategory(long categoryId) {
     categoryRepository.deleteById(categoryId);
     return true;
+  }
+
+  public Page<StoreDto> getStoreList(Pageable pageable) {
+    return storeRepository.findAllByOrderByCreatedAtDesc(pageable).map(StoreDto::new);
+  }
+
+  public StoreDto getStore(String storeId) {
+    return new StoreDto(storeRepository.findById(Long.parseLong(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND)));
+  }
+
+  @Transactional
+  public StoreDto changeStoreStatus(String storeId, boolean status) {
+    Store store = storeRepository.findById(Long.parseLong(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
+
+    if(store.isAccessStatus() == status) {
+      throw new RestApiException(STORE_ACCESS_STATUS_IS_SAME);
+    }
+
+    store.setAccessStatus(status);
+
+    store = storeRepository.save(store);
+
+    if(status) {
+      elasticsearchRestTemplate.save(new StoreDocument(store));
+    } else {
+      StoreDocument storeDocument = storeDocumentRepository.findById(store.getStoreId()).orElseThrow(() -> new RestApiException(STORE_DOCUMENT_NOT_FOUND));
+      elasticsearchRestTemplate.delete(storeDocument);
+    }
+
+    return new StoreDto(store);
   }
 }
