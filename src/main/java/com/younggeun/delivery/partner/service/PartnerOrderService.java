@@ -26,6 +26,7 @@ import com.younggeun.delivery.user.domain.entity.OrderHistory;
 import com.younggeun.delivery.user.domain.entity.OrderTable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,10 +58,21 @@ public class PartnerOrderService {
       throw new RestApiException(MISMATCH_PARTNER_STORE);
     }
 
-    Page<OrderTable> orderTableList = orderRepository.findAllByStoreAndStatusGreaterThanAndUpdatedAtBetweenOrderByUpdatedAtDesc(store, OrderStatus.WITHDRAW,
-                                              LocalDateTime.of(LocalDate.now(), store.getOpenTime()),
-                                              LocalDateTime.of(store.getEndTime().isBefore(store.getOpenTime()) ?
-                                                  LocalDate.now().plusDays(1) : LocalDate.now(), store.getEndTime()), pageable);
+    List<OrderStatus> orderStatusType = new ArrayList<>();
+    orderStatusType.add(OrderStatus.PAYMENT);
+    orderStatusType.add(OrderStatus.ACCEPT);
+    orderStatusType.add(OrderStatus.REFUSE);
+    orderStatusType.add(OrderStatus.DELIVERY_COMPLETED);
+
+    LocalDateTime orderDate;
+    if(store.getLastOpenTime() == null) {
+      orderDate = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+    } else {
+      orderDate = store.getLastOpenTime();
+    }
+
+    Page<OrderTable> orderTableList = orderRepository.findAllByStoreAndStatusInAndStoreLastOpenTimeAfterOrderByCreatedAtDesc(store, orderStatusType,
+                                                        orderDate, pageable);
 
     return orderTableList.map(OrderDto::new);
 
