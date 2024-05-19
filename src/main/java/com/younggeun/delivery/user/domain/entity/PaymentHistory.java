@@ -5,6 +5,7 @@ import com.younggeun.delivery.user.domain.type.PaymentStatusType;
 import com.younggeun.delivery.user.domain.type.PaymentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -41,12 +42,14 @@ public class PaymentHistory {
   private LocalDateTime createdAt; // 결제 요청 시간
   @Column(nullable = false)
   private LocalDateTime approvedAt; // 결제 승인 시간
-  @Enumerated
+  @Enumerated(EnumType.STRING)
+
   @Column(nullable = false)
   private PaymentType paymentType;
   @Column(nullable = false, columnDefinition = "INT CHECK (total_price > 0)")
   private int totalPrice;
-  @Enumerated
+
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private PaymentStatusType status;
 

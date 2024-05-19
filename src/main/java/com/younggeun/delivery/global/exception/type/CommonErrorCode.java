@@ -16,7 +16,10 @@ public enum CommonErrorCode implements ErrorCode {
   CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 카테고리가 존재하지 않습니다."),
   EXIST_CATEGORY_NAME(HttpStatus.BAD_REQUEST, "해당 카테고리명이 이미 존재합니다."),
   SERIALIZING_CART_EXCEPTION(HttpStatus.UNPROCESSABLE_ENTITY, "Error serializing cart."),
-  DESERIALIZING_CART_EXCEPTION(HttpStatus.UNPROCESSABLE_ENTITY, "Error deserializing cart."),;
+  DESERIALIZING_CART_EXCEPTION(HttpStatus.UNPROCESSABLE_ENTITY, "Error deserializing cart."),
+  KAKAO_LOGIN_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "카카오 로그인 도중 실패했습니다."),
+  KAKAO_MAP_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "카카오맵 도중 실패했습니다."),
+  JSON_PROCESS_ERROR(HttpStatus.BAD_REQUEST, "json 파싱 도중 실패했습니다.");
 
   private final HttpStatus httpStatus;
   private final String message;

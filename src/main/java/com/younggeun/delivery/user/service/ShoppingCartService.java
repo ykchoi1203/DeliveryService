@@ -1,15 +1,11 @@
 package com.younggeun.delivery.user.service;
 
-import static com.younggeun.delivery.global.exception.type.CommonErrorCode.DESERIALIZING_CART_EXCEPTION;
-import static com.younggeun.delivery.global.exception.type.CommonErrorCode.SERIALIZING_CART_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MENU_NOT_FOUND;
-import static com.younggeun.delivery.global.exception.type.UserErrorCode.ORDER_MORE_THAN_ONE;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.CART_IS_EMPTY;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.CART_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.DIFFERENT_STORE_IN_CART;
+import static com.younggeun.delivery.global.exception.type.UserErrorCode.ORDER_MORE_THAN_ONE;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.younggeun.delivery.global.exception.RestApiException;
 import com.younggeun.delivery.store.domain.AdditionalMenuRepository;
 import com.younggeun.delivery.store.domain.MenuRepository;
@@ -38,25 +34,21 @@ public class ShoppingCartService {
     if (Boolean.FALSE.equals(redisTemplate.hasKey(userEmail))) {
       return new ArrayList<>();
     }
-
-    String cartJson = (String) redisTemplate.opsForValue().get(userEmail);
-
-    Cart cart = deserialize(cartJson);
+    Cart cart = Cart.deserialize(redisTemplate, userEmail);
 
     return cart.getItems();
   }
 
   public List<CartDto> addToCart(String userEmail, CartDto menu) {
     if(menu.getQuantity() < 1) throw new RestApiException(ORDER_MORE_THAN_ONE);
+
     if (Boolean.FALSE.equals(redisTemplate.hasKey(userEmail))) {
       Cart cart = new Cart();
       cart.setItems(new ArrayList<>());
-      redisTemplate.opsForValue().set(userEmail, serialize(cart));
+      redisTemplate.opsForValue().set(userEmail, cart.serialize());
     }
 
-    String cartJson = (String) redisTemplate.opsForValue().get(userEmail);
-
-    Cart cart = deserialize(cartJson);
+    Cart cart = Cart.deserialize(redisTemplate, userEmail);
 
     if (!cart.getItems().isEmpty()) {
       if (!(cart.getItems().get(0)).getStoreId().equals(menu.getStoreId())) {
@@ -68,7 +60,7 @@ public class ShoppingCartService {
 
     addMenuToCart(cart, menu);
 
-    redisTemplate.opsForValue().set(userEmail, serialize(cart));
+    redisTemplate.opsForValue().set(userEmail, cart.serialize());
 
     return getCart(userEmail);
   }
@@ -101,12 +93,11 @@ public class ShoppingCartService {
     if (Boolean.FALSE.equals(redisTemplate.hasKey(userEmail))) {
       throw new RestApiException(CART_IS_EMPTY);
     }
-
-    Cart cart = deserialize((String) redisTemplate.opsForValue().get(userEmail));
+    Cart cart = Cart.deserialize(redisTemplate, userEmail);
 
     removeMenuFromCart(cart, Long.parseLong(cartId));
 
-    redisTemplate.opsForValue().set(userEmail, serialize(cart));
+    redisTemplate.opsForValue().set(userEmail, cart.serialize());
 
     return getCart(userEmail);
   }
@@ -126,12 +117,11 @@ public class ShoppingCartService {
       throw new RestApiException(CART_IS_EMPTY);
     }
     menuDto.setCartId(Long.parseLong(cartId));
-
-    Cart cart = deserialize((String) redisTemplate.opsForValue().get(userEmail));
+    Cart cart = Cart.deserialize(redisTemplate, userEmail);
 
     updateCartMenu(cart, menuDto);
 
-    redisTemplate.opsForValue().set(userEmail, serialize(cart));
+    redisTemplate.opsForValue().set(userEmail, cart.serialize());
 
     return getCart(userEmail);
   }
@@ -149,21 +139,5 @@ public class ShoppingCartService {
       return cartDto;
     }).orElseThrow(() -> new RestApiException(CART_NOT_FOUND));
 
-  }
-
-  private String serialize(Cart cart) {
-    try {
-      return new ObjectMapper().writeValueAsString(cart);
-    } catch (JsonProcessingException e) {
-      throw new RestApiException(SERIALIZING_CART_EXCEPTION);
-    }
-  }
-
-  private Cart deserialize(String json) {
-    try {
-      return new ObjectMapper().readValue(json, Cart.class);
-    } catch (JsonProcessingException e) {
-      throw new RestApiException(DESERIALIZING_CART_EXCEPTION);
-    }
   }
 }

@@ -2,8 +2,8 @@ package com.younggeun.delivery.store.controller;
 
 import com.younggeun.delivery.store.domain.dto.StoreDto;
 import com.younggeun.delivery.store.domain.type.OrderType;
+import com.younggeun.delivery.store.service.SearchService;
 import com.younggeun.delivery.store.service.StoreService;
-import com.younggeun.delivery.user.domain.dto.DeliveryAddressDto;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class StoreController {
   private final StoreService storeService;
+  private final SearchService searchService;
 
   @Value("${store.photo.baseLocalPath}")
   private String photoBaseLocalPath;
@@ -109,24 +110,35 @@ public class StoreController {
     return ResponseEntity.ok(result);
   }
 
-  @Operation(summary = "user 상점 전체 조회", description = "deliveryAddressDto, Pageable")
-  @GetMapping("/users/store")
-  @PreAuthorize("hasRole('USER')")
-  public ResponseEntity<?> selectAllStore(Authentication authentication,@RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType, @RequestBody DeliveryAddressDto deliveryAddressDto) {
-    OrderType type = OrderType.valueOf(orderType);
-
-    var result = storeService.selectAllStoreByAddress(authentication,deliveryAddressDto, type);
+  @Operation(summary = "partner 상점 수정", description = "storeDto")
+  @PutMapping("/partners/store/{storeId}")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> updateStore(@PathVariable String storeId, Authentication authentication, @RequestBody StoreDto storeDto) {
+    var result = storeService.updateStore(authentication, storeId, storeDto);
     return ResponseEntity.ok(result);
   }
 
-  @Operation(summary = "user 상점 카테고리 조회", description = "deliveryAddressDto, Pageable")
-  @GetMapping("/users/store/{categoryId}")
+  @Operation(summary = "partner 상점 삭제", description = "request")
+  @PutMapping("/partners/store/{storeId}/delete")
+  @PreAuthorize("hasRole('PARTNER')")
+  public ResponseEntity<?> deleteStore(@PathVariable String storeId, Authentication authentication) {
+    var result = storeService.deleteStore(authentication, storeId);
+    return ResponseEntity.ok(result);
+  }
+
+  @Operation(summary = "user 상점 조회(검색 포함)", description = "")
+  @GetMapping("/users/store")
   @PreAuthorize("hasRole('USER')")
-  public ResponseEntity<?> selectStoreByCategory(Authentication authentication,@RequestBody DeliveryAddressDto deliveryAddressDto,
-      @PathVariable String categoryId, @RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType) {
+  public ResponseEntity<?> selectAllStore(Authentication authentication,
+      @RequestParam(name = "category", required = false, defaultValue = "0") String categoryId,
+      @RequestParam(name = "query", required = false, defaultValue = "") String query,
+      @RequestParam(name = "orderType", required = false, defaultValue = "STAR") String orderType,
+      @RequestParam(name = "order", required = false, defaultValue = "ASC") String asc,
+      @RequestParam(name = "distance", required = false, defaultValue = "5000") String distance,
+      @RequestParam(name = "page", required = false, defaultValue = "0") String page) {
     OrderType type = OrderType.valueOf(orderType);
 
-    var result = storeService.selectStoreByCategory(authentication, Long.valueOf(categoryId), deliveryAddressDto, type);
+    var result = searchService.findStores(authentication, type, distance,  Long.parseLong(categoryId), query, asc);
     return ResponseEntity.ok(result);
   }
 

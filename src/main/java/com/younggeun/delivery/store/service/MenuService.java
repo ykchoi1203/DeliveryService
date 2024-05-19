@@ -18,6 +18,10 @@ import com.younggeun.delivery.store.domain.MenuCategoryRepository;
 import com.younggeun.delivery.store.domain.MenuPhotoRepository;
 import com.younggeun.delivery.store.domain.MenuRepository;
 import com.younggeun.delivery.store.domain.StoreRepository;
+import com.younggeun.delivery.store.domain.documents.MenuDocument;
+import com.younggeun.delivery.store.domain.documents.StoreDocument;
+import com.younggeun.delivery.store.domain.documents.repository.MenuDocumentRepository;
+import com.younggeun.delivery.store.domain.documents.repository.StoreDocumentRepository;
 import com.younggeun.delivery.store.domain.dto.AdditionalMenuDto;
 import com.younggeun.delivery.store.domain.dto.MenuCategoryDto;
 import com.younggeun.delivery.store.domain.dto.MenuDto;
@@ -29,6 +33,7 @@ import com.younggeun.delivery.store.domain.entity.MenuCategory;
 import com.younggeun.delivery.store.domain.entity.MenuPhoto;
 import com.younggeun.delivery.store.domain.entity.Store;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +57,12 @@ public class MenuService {
   private final MenuRepository menuRepository;
   private final MenuCategoryRepository menuCategoryRepository;
   private final MenuPhotoRepository menuPhotoRepository;
+
   private final AdditionalMenuRepository additionalMenuRepository;
+  private final MenuDocumentRepository menuDocumentRepository;
+  private final StoreDocumentRepository storeDocumentRepository;
+
+  private final ElasticsearchRestTemplate elasticsearchRestTemplate;
 
   public List<MenuListDto> selectMenu(Authentication authentication, String storeId, RoleType type) {
     Store store = type == RoleType.ROLE_PARTNER ? getStoreWithMatchUser(authentication, storeId) : getStore(storeId);
@@ -98,7 +109,8 @@ public class MenuService {
     return menuCategoryRepository.save(menuCategoryDto.toEntity(store));
   }
 
-  public Menu createStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
+  @Transactional
+  public MenuDto createStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
 
     getStoreWithMatchUser(authentication, storeId);
     MenuCategory menuCategory = menuCategoryRepository.findById(menuDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
@@ -107,23 +119,66 @@ public class MenuService {
       throw new RestApiException(MISMATCH_STORE_CATEGORY);
     }
 
-    return menuRepository.save(menuDto.toEntity(menuCategory));
+    Menu menu = menuRepository.save(menuDto.toEntity(menuCategory));
+    StoreDocument storeDocument = storeDocumentRepository.findById(Long.parseLong(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
+    MenuDocument menuDocument = elasticsearchRestTemplate.save(new MenuDocument(menu, Long.parseLong(storeId)));
+
+    if(storeDocument.getMenuDocumentList() == null) {
+      storeDocument.setMenuDocumentList(new ArrayList<>());
+    }
+    storeDocument.getMenuDocumentList().add(menuDocument);
+
+    elasticsearchRestTemplate.save(storeDocument);
+
+    return new MenuDto(menu);
   }
 
-  public Menu updateStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
+  @Transactional
+  public MenuDto updateStoreMenu(Authentication authentication, MenuDto menuDto, String storeId) {
     getStoreWithMatchUser(authentication, storeId);
     Menu menu = menuRepository.findById(menuDto.getMenuId()).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
     MenuCategory menuCategory = menuCategoryRepository.findById(menuDto.getCategoryId()).orElseThrow(() -> new RestApiException(STORE_CATEGORY_NOT_FOUND));
-    return menuRepository.save(menuDto.toEntity(menu.getMenuId(), menuCategory));
+
+    menu = menuRepository.save(menuDto.toEntity(menu.getMenuId(), menuCategory));
+    // MenuDocument 생성 및 저장
+    MenuDocument menuDocument = new MenuDocument(menu, Long.parseLong(storeId));
+    menuDocument = elasticsearchRestTemplate.save(menuDocument);
+
+    // StoreDocument 가져오기
+    StoreDocument storeDocument = storeDocumentRepository.findById(Long.parseLong(storeId))
+        .orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
+
+    // 메뉴가 이미 존재하는지 확인하고 업데이트 또는 추가
+    boolean isUpdated = false;
+    for (int i = 0; i < storeDocument.getMenuDocumentList().size(); i++) {
+      MenuDocument item = storeDocument.getMenuDocumentList().get(i);
+      if (item.getId().equals(menuDocument.getId())) {
+        item.setName(menuDocument.getName());
+        storeDocument.getMenuDocumentList().set(i, item);
+        isUpdated = true;
+        break;
+      }
+    }
+    if (!isUpdated) {
+      storeDocument.getMenuDocumentList().add(menuDocument);
+    }
+
+    // StoreDocument 저장
+    elasticsearchRestTemplate.save(storeDocument);
+
+    return new MenuDto(menu);
   }
 
+  @Transactional
   public boolean deleteStoreMenu(Authentication authentication, String storeId, long menuId) {
     getStoreWithMatchUser(authentication, storeId);
+    Menu menu = menuRepository.findById(menuId).orElseThrow(() -> new RestApiException(MENU_NOT_FOUND));
 
-    menuRepository.findById(menuId).ifPresent(item -> {
-      item.setDeletedAt(LocalDateTime.now());
-      menuRepository.save(item);
-    });
+    menu.setDeletedAt(LocalDateTime.now());
+
+    menuRepository.save(menu);
+    MenuDocument menuDocument = menuDocumentRepository.findById(menuId);
+    elasticsearchRestTemplate.delete(menuDocument);
 
     return true;
   }

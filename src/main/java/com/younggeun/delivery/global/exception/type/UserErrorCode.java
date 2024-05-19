@@ -24,7 +24,8 @@ public enum UserErrorCode implements ErrorCode {
   CART_IS_EMPTY(HttpStatus.BAD_REQUEST, "장바구니가 비어있습니다."),
   CART_NOT_FOUND(HttpStatus.BAD_REQUEST, "카트 메뉴 번호와 일치하는 번호가 없습니다."),
   ORDER_MORE_THAN_ONE(HttpStatus.BAD_REQUEST, "장바구니에는 하나 이상의 수량을 담을 수 있습니다."),
-  MISMATCH_USER_ORDER(HttpStatus.BAD_REQUEST, "로그인한 유저와 해당 주문자와 일치하지 않습니다."),;
+  MISMATCH_USER_ORDER(HttpStatus.BAD_REQUEST, "로그인한 유저와 해당 주문자와 일치하지 않습니다."),
+  MISMATCH_OAUTH_TYPE(HttpStatus.BAD_REQUEST, "해당하지 소셜 로그인 아이디에 해당하는 Provide 타입과 Provide 타입이 일치하지 않습니다."),;
   private final HttpStatus httpStatus;
   private final String message;
 

@@ -2,6 +2,7 @@ package com.younggeun.delivery.user.domain.entity;
 
 import com.younggeun.delivery.global.entity.BaseEntity;
 import com.younggeun.delivery.global.entity.RoleType;
+import com.younggeun.delivery.user.domain.dto.Oauth2Response;
 import com.younggeun.delivery.user.domain.type.AuthType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,7 +45,7 @@ public class User extends BaseEntity {
   private String nickname;
 
   @Column(nullable = false)
-  @Enumerated
+  @Enumerated(EnumType.STRING)
   private AuthType authType;
 
   private String provider; //어떤 OAuth인지(google, naver 등)
@@ -59,6 +60,18 @@ public class User extends BaseEntity {
 
   private LocalDateTime deletedAt;
 
+  public User(Oauth2Response userInfo) {
+    this.provideId = userInfo.getSub();
+    this.email = userInfo.getEmail();
+    this.username = userInfo.getName();
+    this.nickname = userInfo.getNickname();
+    this.phoneNumber = userInfo.getPhone();
+    this.authType = AuthType.OAUTH;
+  }
+
+  public void setProvideId(String provideId) {
+    this.provideId = provideId;
+  }
   public void setDeletedAt() {
     this.deletedAt = LocalDateTime.now();
   }
