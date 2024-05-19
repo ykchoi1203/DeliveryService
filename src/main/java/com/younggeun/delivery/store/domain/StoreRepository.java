@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface StoreRepository extends JpaRepository<Store, Long> {
 
-  Page<Store> findAllByPartner(Partner partner, Pageable pageable);
+  Page<Store> findAllByPartnerOrderByCreatedAtDesc(Partner partner, Pageable pageable);
 
   @Query(value = "SELECT (store.total_stars / (CASE WHEN store.total_reviews = 0 THEN 1 ELSE store.total_reviews END)) AS star_rate, store.* "
       + "FROM store WHERE store_id IN :storeId ORDER BY star_rate ASC ", nativeQuery = true)
@@ -30,5 +30,7 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
 
   List<Store> findAllByStoreIdInOrderByDeliveryCostAsc(List<Long> storeDocumentIdList);
   List<Store> findAllByStoreIdInOrderByDeliveryCostDesc(List<Long> storeDocumentIdList);
+
+  Page<Store> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
 }

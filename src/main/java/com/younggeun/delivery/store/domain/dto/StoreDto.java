@@ -2,6 +2,7 @@ package com.younggeun.delivery.store.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.younggeun.delivery.store.domain.entity.Store;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,9 @@ public class StoreDto {
   private double latitude;
   private double longitude;
   private String businessNumber;
+
+  private LocalDateTime lastOpenTime;
+  private LocalDateTime lastCloseTime;
 
   @JsonFormat(pattern = "HH:mm:ss")
   private LocalTime openTime;
@@ -64,6 +68,8 @@ public class StoreDto {
     categoryId = store.getCategory().getCategoryId();
     partnerId = store.getPartner().getPartnerId();
     isOpened = store.isOpened();
+    lastOpenTime = store.getLastOpenTime();
+    lastCloseTime = store.getLastCloseTime();
   }
 
   public Store toEntity() {

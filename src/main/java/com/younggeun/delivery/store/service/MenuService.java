@@ -9,6 +9,7 @@ import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMAT
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_STORE_CATEGORY;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_STORE_MENU;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_CATEGORY_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_ACCESS;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
 
 import com.younggeun.delivery.global.entity.RoleType;
@@ -117,6 +118,10 @@ public class MenuService {
 
     if(menuCategory.getStore().getStoreId() != Long.parseLong(storeId)) {
       throw new RestApiException(MISMATCH_STORE_CATEGORY);
+    }
+
+    if(!menuCategory.getStore().isAccessStatus()) {
+      throw new RestApiException(STORE_NOT_ACCESS);
     }
 
     Menu menu = menuRepository.save(menuDto.toEntity(menuCategory));

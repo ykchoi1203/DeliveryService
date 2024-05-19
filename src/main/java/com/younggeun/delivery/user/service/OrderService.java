@@ -2,6 +2,7 @@ package com.younggeun.delivery.user.service;
 
 import static com.younggeun.delivery.global.exception.type.PayErrorCode.LEAST_ORDER_COST;
 import static com.younggeun.delivery.global.exception.type.PayErrorCode.ORDER_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.CANNOT_CHANGE_ORDER;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MENU_SOLD_OUT;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_OPENED;
@@ -182,5 +183,24 @@ public class OrderService {
     menuList.forEach(menuDto -> menuDto.setAdditionalMenuList(additionalMenuMap.get(menuDto.getMenuId())));
 
     return new OrderDetailDto(orderTable, menuList);
+  }
+
+  public OrderDto getDelivery(Authentication authentication, String orderId) {
+    User user = userRepository.findByEmail(authentication.getName()).orElseThrow(()-> new RestApiException(USER_NOT_FOUND_EXCEPTION));
+    OrderTable orderTable = orderRepository.findById(Long.valueOf(orderId)).orElseThrow(() -> new RestApiException(ORDER_NOT_FOUND));
+
+    if(user.getUserId() != orderTable.getUser().getUserId()) {
+      throw new RestApiException(MISMATCH_USER_ORDER);
+    }
+
+    if(orderTable.getStatus() != OrderStatus.ACCEPT) {
+      throw new RestApiException(CANNOT_CHANGE_ORDER);
+    }
+
+    orderTable.setDeliveryTime(LocalDateTime.now());
+    orderTable.setStatus(OrderStatus.DELIVERY_COMPLETED);
+
+    return new OrderDto(orderRepository.save(orderTable));
+
   }
 }

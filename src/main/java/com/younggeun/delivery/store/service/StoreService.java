@@ -1,9 +1,11 @@
 package com.younggeun.delivery.store.service;
 
 import static com.younggeun.delivery.global.exception.type.CommonErrorCode.KAKAO_MAP_ERROR;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.CANNOT_CLOSE_STORE_BECAUSE_ORDER_STATUS;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.EXIST_PHOTO_EXCEPTION;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.MISMATCH_PARTNER_STORE;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_CATEGORY_NOT_FOUND;
+import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_ACCESS;
 import static com.younggeun.delivery.global.exception.type.StoreErrorCode.STORE_NOT_FOUND;
 import static com.younggeun.delivery.global.exception.type.UserErrorCode.USER_NOT_FOUND_EXCEPTION;
 
@@ -26,9 +28,13 @@ import com.younggeun.delivery.store.domain.entity.Category;
 import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.store.domain.entity.StorePhoto;
 import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
+import com.younggeun.delivery.store.domain.type.OrderStatus;
+import com.younggeun.delivery.user.domain.OrderRepository;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +72,12 @@ public class StoreService {
   private final StoreDocumentRepository storeDocumentRepository;
   private final ElasticsearchRestTemplate elasticsearchOperations;
   private final MenuDocumentRepository menuDocumentRepository;
+  private final OrderRepository orderRepository;
 
   public Page<StoreDto> selectPartnerStore(Authentication authentication, Pageable pageable) {
     Partner partner = getPartner(authentication);
 
-    return storeToDto(storeRepository.findAllByPartner(partner, pageable));
+    return storeToDto(storeRepository.findAllByPartnerOrderByCreatedAtDesc(partner, pageable));
   }
 
   @Transactional
@@ -95,15 +102,14 @@ public class StoreService {
         .leastOrderCost(request.getLeastOrderCost())
         .deliveryCost(request.getDeliveryCost())
         .originNotation(request.getOriginNotation())
-        .accessStatus(true) // 추후 admin 에서 허가를 하는 기능을 만든다면 false로 바꿀 예정.
+        .accessStatus(false)
         .category(category)
         .partner(partner).build());
-    System.out.println(store);
     // 추후 admin 에서 허가를 하는 기능을 만든다면 그 메서드에서 저장할 예정.
-    StoreDocument storeDocument = new StoreDocument(store);
-    System.out.println(storeDocument);
-
-    elasticsearchOperations.save(new StoreDocument(store));
+//    StoreDocument storeDocument = new StoreDocument(store);
+//    System.out.println(storeDocument);
+//
+//    elasticsearchOperations.save(new StoreDocument(store));
 
     return store;
   }
@@ -252,7 +258,25 @@ public class StoreService {
       throw new RestApiException(MISMATCH_PARTNER_STORE);
     }
 
+    if(!store.isAccessStatus()) {
+      throw new RestApiException(STORE_NOT_ACCESS);
+    }
+
+    if(!isOpened) {
+      List<OrderStatus> orderStatusList = new ArrayList<>(
+          List.of(new OrderStatus[]{OrderStatus.PAYMENT, OrderStatus.ACCEPT}));
+      if(orderRepository.existsByStoreStoreIdAndUpdatedAtAfterAndStatusIn(Long.parseLong(storeId), LocalDateTime.of(LocalDate.now(),
+          LocalTime.MIN), orderStatusList)) {
+        throw new RestApiException(CANNOT_CLOSE_STORE_BECAUSE_ORDER_STATUS);
+      }
+    }
+
     store.setOpened(isOpened);
+    if(isOpened) {
+      store.setLastOpenTime(LocalDateTime.now());
+    } else {
+      store.setLastCloseTime(LocalDateTime.now());
+    }
 
     return new StoreDto(storeRepository.save(store));
 

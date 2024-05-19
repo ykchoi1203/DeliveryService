@@ -25,7 +25,14 @@ public enum UserErrorCode implements ErrorCode {
   CART_NOT_FOUND(HttpStatus.BAD_REQUEST, "카트 메뉴 번호와 일치하는 번호가 없습니다."),
   ORDER_MORE_THAN_ONE(HttpStatus.BAD_REQUEST, "장바구니에는 하나 이상의 수량을 담을 수 있습니다."),
   MISMATCH_USER_ORDER(HttpStatus.BAD_REQUEST, "로그인한 유저와 해당 주문자와 일치하지 않습니다."),
-  MISMATCH_OAUTH_TYPE(HttpStatus.BAD_REQUEST, "해당하지 소셜 로그인 아이디에 해당하는 Provide 타입과 Provide 타입이 일치하지 않습니다."),;
+  MISMATCH_OAUTH_TYPE(HttpStatus.BAD_REQUEST, "해당하지 소셜 로그인 아이디에 해당하는 Provide 타입과 Provide 타입이 일치하지 않습니다."),
+  REVIEW_NOT_FOUND(HttpStatus.BAD_REQUEST, "해당 리뷰를 찾을 수 없습니다."),
+  MISMATCH_USER_REVIEW(HttpStatus.BAD_REQUEST, "로그인한 유저와 리뷰 작성자가 다릅니다."),
+  STAR_RATING_DISABLED(HttpStatus.BAD_REQUEST, "별점은 1~5까지만 입력할 수 있습니다."),
+  CANNOT_WRITE_REVIEW(HttpStatus.BAD_REQUEST, "3일 이내의 주문에만 작성할 수 있습니다."),
+  DELIVERY_NOT_YET(HttpStatus.BAD_REQUEST, "아직 배달이 완료되지 않았습니다."),
+  CANNOT_UPDATE_REVIEW(HttpStatus.BAD_REQUEST, "리뷰 작성 후 7일 이내에만 수정할 수 있습니다.");
+
   private final HttpStatus httpStatus;
   private final String message;
 
