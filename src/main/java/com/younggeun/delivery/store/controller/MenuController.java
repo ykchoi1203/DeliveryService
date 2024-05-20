@@ -143,7 +143,7 @@ public class MenuController {
     return ResponseEntity.ok(result);
   }
 
-  @Operation(summary = "partner 상점 사진 변경", description = "request")
+  @Operation(summary = "partner 메뉴 사진 변경", description = "request")
   @PutMapping("/partners/{storeId}/menu/{menuId}/photo")
   @PreAuthorize("hasRole('PARTNER')")
   public ResponseEntity<?> updateStorePhoto(Authentication authentication, @RequestParam("file") MultipartFile file,

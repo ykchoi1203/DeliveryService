@@ -1,0 +1,50 @@
+{
+  "properties": {
+    "id": {
+      "type": "long"
+    },
+    "name": {
+      "type": "text",
+      "analyzer": "korean_search_analyzer"
+    },
+    "categoryId": {
+      "type": "long"
+    },
+    "address1": {
+      "type": "text",
+      "analyzer": "korean_search_analyzer"
+    },
+    "address2": {
+      "type": "text",
+      "analyzer": "korean_search_analyzer"
+    },
+    "address3": {
+      "type": "text",
+      "analyzer": "korean_search_analyzer"
+    },
+    "deliveryCost": {
+      "type": "integer"
+    },
+    "stars": {
+      "type": "double"
+    },
+    "location": {
+      "type": "geo_point"
+    },
+    "menuDocumentList": {
+      "type": "nested",
+      "properties": {
+        "id": {
+          "type": "long"
+        },
+        "name": {
+          "type": "text",
+          "analyzer": "korean_search_analyzer"
+        },
+        "storeId": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}

@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WishRepository extends JpaRepository<Wish, Long> {
 
-  List<Wish> findAllByUser(User user);
+  List<Wish> findAllByUserOrderByCreatedAtDesc(User user);
 }

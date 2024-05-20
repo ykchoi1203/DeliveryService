@@ -225,7 +225,7 @@ public class UserService implements UserDetailsService {
   public List<Wish> getWishStore(Authentication authentication) {
     User user = userRepository.findByEmail(authentication.getName()).orElseThrow(() -> new RestApiException(USER_NOT_FOUND_EXCEPTION));
 
-    return wishRepository.findAllByUser(user);
+    return wishRepository.findAllByUserOrderByCreatedAtDesc(user);
   }
 
 

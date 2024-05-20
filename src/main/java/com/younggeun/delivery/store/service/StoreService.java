@@ -13,7 +13,9 @@ import com.younggeun.delivery.global.config.KakaoMapConfig;
 import com.younggeun.delivery.global.exception.RestApiException;
 import com.younggeun.delivery.partner.domain.PartnerRepository;
 import com.younggeun.delivery.partner.domain.entity.Partner;
+import com.younggeun.delivery.store.domain.AdditionalMenuRepository;
 import com.younggeun.delivery.store.domain.CategoryRepository;
+import com.younggeun.delivery.store.domain.MenuRepository;
 import com.younggeun.delivery.store.domain.StorePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreProfilePhotoRepository;
 import com.younggeun.delivery.store.domain.StoreRepository;
@@ -24,7 +26,9 @@ import com.younggeun.delivery.store.domain.documents.repository.StoreDocumentRep
 import com.younggeun.delivery.store.domain.dto.KakaoMapResponse;
 import com.younggeun.delivery.store.domain.dto.PhotoDto;
 import com.younggeun.delivery.store.domain.dto.StoreDto;
+import com.younggeun.delivery.store.domain.entity.AdditionalMenu;
 import com.younggeun.delivery.store.domain.entity.Category;
+import com.younggeun.delivery.store.domain.entity.Menu;
 import com.younggeun.delivery.store.domain.entity.Store;
 import com.younggeun.delivery.store.domain.entity.StorePhoto;
 import com.younggeun.delivery.store.domain.entity.StoreProfilePhoto;
@@ -73,6 +77,8 @@ public class StoreService {
   private final ElasticsearchRestTemplate elasticsearchOperations;
   private final MenuDocumentRepository menuDocumentRepository;
   private final OrderRepository orderRepository;
+  private final MenuRepository menuRepository;
+  private final AdditionalMenuRepository additionalMenuRepository;
 
   public Page<StoreDto> selectPartnerStore(Authentication authentication, Pageable pageable) {
     Partner partner = getPartner(authentication);
@@ -278,7 +284,25 @@ public class StoreService {
       store.setLastCloseTime(LocalDateTime.now());
     }
 
-    return new StoreDto(storeRepository.save(store));
+    store = storeRepository.save(store);
+
+    if(menuRepository.existsByMenuCategoryStoreStoreIdAndSoldOutStatusIsTrue(Long.parseLong(storeId))) {
+      List<Menu> menuList = menuRepository.findAllByMenuCategoryStoreStoreIdAndSoldOutStatusIsTrue(Long.parseLong(storeId));
+
+      menuList.forEach(menu -> menu.setSoldOutStatus(false));
+
+      menuRepository.saveAll(menuList);
+    }
+
+    if(additionalMenuRepository.existsByMenuMenuCategoryStoreStoreIdAndSoldOutStatusIsTrue(Long.parseLong(storeId))) {
+      List<AdditionalMenu> menuList = additionalMenuRepository.findAllByMenuMenuCategoryStoreStoreIdAndSoldOutStatusIsTrue(Long.parseLong(storeId));
+
+      menuList.forEach(menu -> menu.setSoldOutStatus(false));
+
+      additionalMenuRepository.saveAll(menuList);
+    }
+
+    return new StoreDto(store);
 
   }
 
