@@ -21,4 +21,8 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
   boolean existsByMenuIdIn(List<Long> menuIdList);
 
   List<Menu> findAllByMenuIdIn(List<Long> menuIdList);
+
+  boolean existsByMenuCategoryStoreStoreIdAndSoldOutStatusIsTrue(long storeId);
+
+  List<Menu> findAllByMenuCategoryStoreStoreIdAndSoldOutStatusIsTrue(long storeId);
 }

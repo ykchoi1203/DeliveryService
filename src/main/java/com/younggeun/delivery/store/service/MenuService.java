@@ -185,6 +185,15 @@ public class MenuService {
     MenuDocument menuDocument = menuDocumentRepository.findById(menuId);
     elasticsearchRestTemplate.delete(menuDocument);
 
+    StoreDocument storeDocument = storeDocumentRepository.findById(Long.parseLong(storeId)).orElseThrow(() -> new RestApiException(STORE_NOT_FOUND));
+
+    List<MenuDocument> updatedMenuList = storeDocument.getMenuDocumentList().stream()
+        .filter(storeMenu -> !storeMenu.getId().equals(menuId))
+        .toList();
+
+    storeDocument.setMenuDocumentList(updatedMenuList);
+    elasticsearchRestTemplate.save(storeDocument);
+
     return true;
   }
 
@@ -204,7 +213,7 @@ public class MenuService {
   public List<MenuCategory> selectMenuCategory(Authentication authentication, String storeId) {
     Store store = getStoreWithMatchUser(authentication, storeId);
 
-    return menuCategoryRepository.findAllByStore(store);
+    return menuCategoryRepository.findAllByStoreOrderBySequence(store);
   }
 
   public MenuCategory updateStoreMenuCategory(Authentication authentication, MenuCategoryDto menuCategoryDto, String storeId, String categoryId) {
