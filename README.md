@@ -406,7 +406,7 @@
 
 
 # ERD
-![delivery](https://github.com/ykchoi1203/DeliveryService/assets/30820741/b60dbe06-fa96-4f37-82dd-9ff7497f34ff)
+![delivery](https://github.com/ykchoi1203/DeliveryService/assets/30820741/8e24dbd7-ad5f-4600-9148-5f6ca7e1cb45)
 
 
 ## Trouble Shooting
