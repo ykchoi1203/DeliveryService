@@ -406,7 +406,7 @@
 
 
 # ERD
-[delivery](https://github.com/ykchoi1203/DeliveryService/assets/30820741/119c0cb6-7596-4e61-9914-8dcd9b1f6f83)
+![delivery](https://github.com/ykchoi1203/DeliveryService/assets/30820741/119c0cb6-7596-4e61-9914-8dcd9b1f6f83)
 
 
 
